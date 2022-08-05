@@ -17,20 +17,13 @@ class TestOracleModule(unittest.TestCase):
         update_params = pathlib.Path().resolve().joinpath("./internal/modules/oracle/update-params.json")
         submit_and_pass_proposal(
             proposal_file_or_name=update_params,
-            proposal_type='param-change',
-            extra_args='200uumee'
+            proposal_type='param-change'
         )
 
     def test_query_oracle_params(self):
         status, res = query_params()
         self.assertTrue(status)
-
-        if len(res['accept_list']) == 0:
-            self.update_oracle_params()
-
-        status, res = query_params()
-        self.assertTrue(status)
-        self.assertTrue(len(res['accept_list']) >= 1, "It should have at least one token in the accept list")
+        self.assertTrue(len(res['params']['accept_list']) >= 1, "It should have at least one token in the accept list")
 
 
 if __name__ == "__main__":
