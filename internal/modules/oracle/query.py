@@ -16,12 +16,6 @@ def query_exchange_rate(asset):
 --chain-id {CHAINID} --output json"""
     return exec_command(command)
 
-# query_exchange_rate queries the price of an exchange rate
-def query_exchange_rate(asset):
-    command = f"""{DAEMON} q oracle exchange-rate ${asset} --node {RPC} \
---chain-id {CHAINID} --output json"""
-    return exec_command(command)
-
 def query_aggregate_prevote(valAddress):
     command = f"""{DAEMON} q oracle aggregate-prevotes ${valAddress} --node {RPC} \
 --chain-id {CHAINID} --output json"""
