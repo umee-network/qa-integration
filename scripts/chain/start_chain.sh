@@ -45,7 +45,7 @@ then
         git clone $GH_URL
     fi
     cd $REPO
-    git fetch --all && git checkout $CHAIN_VERSION
+    git fetch --all && git checkout $CHAIN_VERSION_BRANCH
     echo PWD: $(pwd)
     make build
 fi

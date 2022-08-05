@@ -27,6 +27,11 @@ then
     display_usage
 fi
 
+if [ -z $CHAIN_VERSION_BRANCH ]
+then
+    CHAIN_VERSION_BRANCH = $CHAIN_VERSION
+fi
+
 if [ -z $NUM_VALS ]
 then
     NUM_VALS = 3
