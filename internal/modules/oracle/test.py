@@ -1,4 +1,3 @@
-from lib2to3.pgen2.token import EQUAL
 import time
 import logging
 import unittest
