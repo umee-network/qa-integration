@@ -17,7 +17,7 @@ from modules.oracle.tx import (
     tx_submit_vote,
 )
 
-from modules.oracle.utils import (
+from modules.oracle.hash import (
     get_hash,
 )
 
