@@ -32,7 +32,8 @@ EXCHANGE_RATES = ExchangeRates(
     ExchangeRate("UMEE", "0.02"),
     ExchangeRate("ATOM", "1.00"),
     ExchangeRate("JUNO", "0.50"),
-    )
+)
+
 STATIC_SALT = "af8ed1e1f34ac1ac00014581cbc31f2f24480b09786ac83aabf2765dada87509"
 
 validator1_home = f"{env.DAEMON_HOME}-1"
@@ -40,17 +41,6 @@ validator2_home = f"{env.DAEMON_HOME}-2"
 
 validator1_acc = keys_show("validator1", "val")[1]
 validator2_acc = keys_show("validator2", "val", validator2_home)[1]
-
-def submit_prevotes():
-        # Get Hash
-        vote_hash_1 = get_hash(EXCHANGE_RATES.ToString(), STATIC_SALT, validator1_acc["address"])
-        vote_hash_2 = get_hash(EXCHANGE_RATES.ToString(), STATIC_SALT, validator2_acc["address"])
-        # Submit 1st prevote
-        tx_submit_prevote(validator1_acc["name"], vote_hash_1, validator1_home)
-        time.sleep(0.5)
-        # Submit 2nd prevote
-        tx_submit_prevote(validator2_acc["name"], vote_hash_2, validator2_home)
-
 class TestOracleModule(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -73,33 +63,42 @@ class TestOracleModule(unittest.TestCase):
         # Submit 1st prevote
         status = tx_submit_prevote(validator1_acc["name"], vote_hash_1, validator1_home)
         self.assertTrue(status)
-        time.sleep(1)
+
         # Submit 2nd prevote
         status = tx_submit_prevote(validator2_acc["name"], vote_hash_2, validator2_home)
         self.assertTrue(status)
-        time.sleep(1)
 
         # Query to verify prevotes exist
         status, prevote_1 = query_aggregate_prevote(validator1_acc["address"])
         self.assertTrue(status)
-        self.assertEqual(prevote_1["hash"], vote_hash_1)
+        self.assertEqual(prevote_1["aggregate_prevote"]["hash"].upper(), vote_hash_1)
         status, prevote_2 = query_aggregate_prevote(validator2_acc["address"])
         self.assertTrue(status)
-        self.assertEqual(prevote_2["hash"], vote_hash_2)
+        self.assertEqual(prevote_2["aggregate_prevote"]["hash"].upper(), vote_hash_2)
 
     # test_votes tests to make sure that we can submit votes
     def test_votes(self):
-        submit_prevotes()
+        # Wait for the next voting period to avoid 'prevote already submitted for this voting period' error
+        # TODO - maybe this test should use a different validator? Do we need to use two of them??
+        time.sleep(30)
+        # Get Hash
+        vote_hash_1 = get_hash(EXCHANGE_RATES.ToString(), STATIC_SALT, validator1_acc["address"])
+        vote_hash_2 = get_hash(EXCHANGE_RATES.ToString(), STATIC_SALT, validator2_acc["address"])
+
+        # Submit 1st prevote
+        tx_submit_prevote(validator1_acc["name"], vote_hash_1, validator1_home)
+
+        # Submit 2nd prevote
+        tx_submit_prevote(validator2_acc["name"], vote_hash_2, validator2_home)
         status = query_aggregate_prevote(validator1_acc["address"])
         self.assertTrue(status)
         status = query_aggregate_prevote(validator2_acc["address"])
         self.assertTrue(status)
-        # Wait for the next voting period
-        time.sleep(30)
-        status = tx_submit_vote(validator1_acc["name"], STATIC_SALT, EXCHANGE_RATES.ToString())
+
+        status = tx_submit_vote(validator1_acc["name"], STATIC_SALT, validator1_home, EXCHANGE_RATES.ToString())
         self.assertTrue(status)
-        time.sleep(1)
-        status = tx_submit_vote(validator2_acc["name"], STATIC_SALT, EXCHANGE_RATES.ToString())
+
+        status = tx_submit_vote(validator2_acc["name"], STATIC_SALT, validator2_home, EXCHANGE_RATES.ToString())
         self.assertTrue(status)
 
         # Query votes to make sure they exist, and are correct

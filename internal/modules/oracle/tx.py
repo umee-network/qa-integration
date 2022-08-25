@@ -24,10 +24,11 @@ def tx_submit_prevote(
 def tx_submit_vote(
     from_key,
     salt,
+    home,
     exchange_rates,
     gas=DEFAULT_GAS,
 ):
     command = f"""{DAEMON} tx oracle exchange-rate-vote {salt} {exchange_rates} \
 --chain-id {CHAINID} --keyring-backend test \
---home {DAEMON_HOME}-1 --from {from_key} --node {RPC} --output json -y --gas {gas}"""
+--home {home} --from {from_key} --node {RPC} --output json -y --gas {gas}"""
     return exec_command(command)

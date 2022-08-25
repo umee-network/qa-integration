@@ -16,6 +16,7 @@ class ExchangeRates:
             str = str + r.ToString()
             if(id+1 != len(self.rates)):
                 str = str + ","
+        return str
     def GetRate(self, denom):
         for r in self.rates:
             if(r.denom == denom):
