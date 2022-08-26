@@ -36,8 +36,11 @@ def query_miss_counter(valAddress):
 --chain-id {CHAINID} --output json"""
     return exec_command(command)
 
-
 def query_params():
     command = f"""{DAEMON} q oracle params --node {RPC} \
 --chain-id {CHAINID} --output json"""
+    return exec_command(command)
+
+def node_status():
+    command = f"{DAEMON} status --node {RPC}"
     return exec_command(command)
