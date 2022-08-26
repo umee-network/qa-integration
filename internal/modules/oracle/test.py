@@ -1,10 +1,15 @@
 import time
 import logging
 import unittest
+import json
 import inspect
 import pathlib
 from internal.modules.gov.tx import submit_and_pass_proposal
-from internal.modules.oracle.query import query_aggregate_prevote, query_aggregate_vote
+from internal.modules.oracle.query import (
+    query_aggregate_prevote,
+    query_aggregate_vote,
+    node_status,
+)
 from utils import env
 from internal.core.keys import keys_show
 
@@ -43,6 +48,12 @@ validator3_home = f"{env.DAEMON_HOME}-3"
 validator1_acc = keys_show("validator1", "val")[1]
 validator2_acc = keys_show("validator2", "val", validator2_home)[1]
 validator3_acc = keys_show("validator3", "val", validator3_home)[1]
+
+def get_block_height():
+    status, message = node_status()
+    # TODO - this status is broken and returns false when successful
+    return json.loads(message)["SyncInfo"]["latest_block_height"]
+
 class TestOracleModule(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -83,14 +94,20 @@ class TestOracleModule(unittest.TestCase):
         # Get Hash
         vote_hash = get_hash(EXCHANGE_RATES.ToString(), STATIC_SALT, validator3_acc["address"])
 
+        # Make sure we are not at the last two blocks of a voting period
+        block_height = int(get_block_height())
+        vp_block_height = (block_height % 5) + 1
+        if vp_block_height == 3:
+            time.sleep(2)
+        if vp_block_height == 4:
+            time.sleep(1)
+
         # Submit prevote
         tx_submit_prevote(validator3_acc["name"], vote_hash, validator3_home)
 
         # Query prevote
         status, prevote = query_aggregate_prevote(validator3_acc["address"])
         self.assertTrue(status)
-
-        submit_block_height = prevote["aggregate_prevote"]["submit_block"]
 
         time.sleep(1)
 
@@ -102,7 +119,9 @@ class TestOracleModule(unittest.TestCase):
         status, vote_1 = query_aggregate_vote(validator3_acc["address"])
         self.assertTrue(status)
  
-        # self.assertEqual(len(vote_1["exchange_rate_tuples"]), EXCHANGE_RATES.Len)
+        # TODO - fix this assert (only the umee price is currently returned)
+        #self.assertEqual(len(vote_1["aggregate_vote"]["exchange_rate_tuples"]), EXCHANGE_RATES.Len)
+
         for rate in vote_1["aggregate_vote"]["exchange_rate_tuples"]:
             self.assertEqual(float(rate["exchange_rate"]), float(EXCHANGE_RATES.GetRate(rate["denom"])))
 
