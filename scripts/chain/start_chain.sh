@@ -39,16 +39,8 @@ if type $DAEMON &> /dev/null; then
     CURR_VERSION='v'$($DAEMON version)
 fi
 
-export GOROOT=/usr/local/go
-export GOPATH=$HOME/go
-export GOBIN=$GOPATH/bin
-export PATH=$PATH:/usr/local/go/bin:$GOBIN
-echo $GOPATH
-echo $GOBIN
-echo $PATH
-
-# if [[ -z DAEMON_EXISTS || $CURR_VERSION != $CHAIN_VERSION ]]
-# then
+if [[ -z DAEMON_EXISTS || $CURR_VERSION != $CHAIN_VERSION ]]
+then
     echo "INFO: Installing $DAEMON"
     if [ ! -d $REPO ]
     then
@@ -58,7 +50,7 @@ echo $PATH
     git fetch --all && git checkout $CHAIN_VERSION
     echo PWD: $(pwd)
     make build && make install
-# fi
+fi
 
 cd $HOME
 echo "Installed $DAEMON version details:"
