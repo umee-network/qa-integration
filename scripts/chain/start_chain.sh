@@ -58,7 +58,8 @@ export PATH=$PATH:/usr/local/go/bin:$GOBIN
 # fi
 
 cd $HOME
-echo "Installed $DAEMON version details:"
+echo "2 Installed $DAEMON version details:"
+which $DAEMON
 # check version
 $DAEMON version --long
 # export daemon home paths
