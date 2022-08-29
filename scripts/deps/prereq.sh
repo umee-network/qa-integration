@@ -15,7 +15,7 @@ source ../../env
 # if command_exists go ; then
 #   echo "Golang is already installed"
 # else
-  rm -rf /usr/local/go
+  sudo rm -rf /usr/local/go
   echo "Install dependencies"
   sudo apt update
   sudo apt install build-essential jq -y

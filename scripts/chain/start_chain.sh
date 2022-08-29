@@ -32,6 +32,8 @@ export REPO=$(basename $GH_URL .git)
 DAEMON_EXISTS=""
 CURR_VERSION=""
 echo "INFO: Checking $DAEMON is installed or not"
+which $DAEMON
+$DAEMON version
 if type $DAEMON &> /dev/null; then
     DAEMON_EXISTS="true"
     CURR_VERSION='v'$($DAEMON version)
