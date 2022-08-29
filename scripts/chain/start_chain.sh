@@ -32,15 +32,15 @@ export REPO=$(basename $GH_URL .git)
 DAEMON_EXISTS=""
 CURR_VERSION=""
 echo "INFO: Checking $DAEMON is installed or not"
-which $DAEMON
-$DAEMON version
+# which $DAEMON
+# $DAEMON version
 if type $DAEMON &> /dev/null; then
     DAEMON_EXISTS="true"
     CURR_VERSION='v'$($DAEMON version)
 fi
 
-if [[ -z DAEMON_EXISTS || $CURR_VERSION != $CHAIN_VERSION ]]
-then
+# if [[ -z DAEMON_EXISTS || $CURR_VERSION != $CHAIN_VERSION ]]
+# then
     echo "INFO: Installing $DAEMON"
     if [ ! -d $REPO ]
     then
@@ -50,7 +50,7 @@ then
     git fetch --all && git checkout $CHAIN_VERSION
     echo PWD: $(pwd)
     make build
-fi
+# fi
 
 cd $HOME
 echo "Installed $DAEMON version details:"
