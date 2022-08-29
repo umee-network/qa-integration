@@ -57,7 +57,7 @@ echo $PATH
     cd $REPO
     git fetch --all && git checkout $CHAIN_VERSION
     echo PWD: $(pwd)
-    make build
+    make build && make install
 # fi
 
 cd $HOME
