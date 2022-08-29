@@ -51,9 +51,8 @@ validator2_acc = keys_show("validator2", "val", validator2_home)[1]
 validator3_acc = keys_show("validator3", "val", validator3_home)[1]
 
 def get_block_height():
-    status, message = node_status()
-    # TODO - this status is broken and returns false when successful
-    return json.loads(message)["SyncInfo"]["latest_block_height"]
+    _, message = node_status()
+    return message["SyncInfo"]["latest_block_height"]
 
 class TestOracleModule(unittest.TestCase):
     @classmethod
@@ -61,8 +60,7 @@ class TestOracleModule(unittest.TestCase):
         update_params = pathlib.Path().resolve().joinpath("./internal/modules/oracle/update-params.json")
         submit_and_pass_proposal(
             proposal_file_or_name=update_params,
-            proposal_type='param-change',
-            extra_args='200uumee'
+            proposal_type='param-change'
         )
 
     def test_query_oracle_params(self):
@@ -95,6 +93,7 @@ class TestOracleModule(unittest.TestCase):
         self.assertEqual(prevote_2["aggregate_prevote"]["hash"].upper(), vote_hash_2)
 
     # TODO - test to verify no aggregate pre-vote error (the vote happens more than one VP later or in same VP)
+
     # test_votes tests to make sure that we can submit votes
     def test_votes(self):
         # Get Hash
@@ -110,7 +109,6 @@ class TestOracleModule(unittest.TestCase):
         # The get_block_height() function is delayed by a block by the time you read the
         # value so it is not necessary to target the last block.
         if vp_block_height == BLOCKS_PER_VOTING_PERIOD - 2:
-            # These timings are not exact because block time can vary depending on the hardware
             time.sleep(1)
         if vp_block_height == BLOCKS_PER_VOTING_PERIOD - 1:
             time.sleep(0.5)
