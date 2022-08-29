@@ -43,6 +43,9 @@ export GOROOT=/usr/local/go
 export GOPATH=$HOME/go
 export GOBIN=$GOPATH/bin
 export PATH=$PATH:/usr/local/go/bin:$GOBIN
+echo $GOPATH
+echo $GOBIN
+echo $PATH
 
 # if [[ -z DAEMON_EXISTS || $CURR_VERSION != $CHAIN_VERSION ]]
 # then
@@ -58,8 +61,7 @@ export PATH=$PATH:/usr/local/go/bin:$GOBIN
 # fi
 
 cd $HOME
-echo "2 Installed $DAEMON version details:"
-which $DAEMON
+echo "Installed $DAEMON version details:"
 # check version
 $DAEMON version --long
 # export daemon home paths
