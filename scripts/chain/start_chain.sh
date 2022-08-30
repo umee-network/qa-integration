@@ -248,84 +248,84 @@ do
     DIFF=$(($a - 1))
     INC=$(($DIFF * 2))
     RPC=$((16657 + $INC))
+    GRPC=$((9092 + $INC))
+    PFPORT=$((7171 + $INC))
 
     pfconfig="${DAEMON_HOME}-${a}/price-feeder/config.toml"
 
     mkdir -p "${DAEMON_HOME}-${a}/price-feeder"
+
+
     touch $pfconfig
 
-    UMEE_E2E_PRICE_FEEDER_VALIDATOR="umeed keys show validator${a} --home "${DAEMON_HOME}-${a}" --bech val --keyring-backend test --output json | jq .address
-    UMEE_E2E_PRICE_FEEDER_ADDRESS="umeed keys show validator${a} --home "${DAEMON_HOME}-${a}" --bech acc --keyring-backend test --output json | jq .address
+    UMEE_E2E_PRICE_FEEDER_VALIDATOR=$(eval "umeed keys show validator${a} --home ${DAEMON_HOME}-${a} --bech val --keyring-backend test --output json | jq .address")
+    UMEE_E2E_PRICE_FEEDER_ADDRESS=$(eval "umeed keys show validator${a} --home ${DAEMON_HOME}-${a} --bech acc --keyring-backend test --output json | jq .address")
     UMEE_E2E_UMEE_VAL_KEY_DIR="${DAEMON_HOME}-${a}"
     UMEE_E2E_UMEE_VAL_HOST="tcp://localhost:${RPC}"
 
     # setup price-feeder configuration
-    tee $pfconfig <<EOF
-    gas_adjustment = 1.5
-    provider_timeout = "5000ms"
-    [server]
-    listen_addr = "0.0.0.0:7171"
-    read_timeout = "20s"
-    verbose_cors = true
-    write_timeout = "20s"
-    [[currency_pairs]]
-    base = "UMEE"
-    providers = [
-    "mock",
-    ]
-    quote = "USDT"
-    [[currency_pairs]]
-    base = "ATOM"
-    providers = [
-    "mock",
-    ]
-    quote = "USDC"
-    [[currency_pairs]]
-    base = "USDC"
-    providers = [
-    "mock",
-    ]
-    quote = "USD"
-    [[currency_pairs]]
-    base = "USDT"
-    providers = [
-    "mock",
-    ]
-    quote = "USD"
-    [account]
-    address = '$UMEE_E2E_PRICE_FEEDER_ADDRESS'
-    chain_id = "umee-local-testnet"
-    validator = '$UMEE_E2E_PRICE_FEEDER_VALIDATOR'
-    [keyring]
-    backend = "test"
-    dir = '$UMEE_E2E_UMEE_VAL_KEY_DIR'
-    [rpc]
-    grpc_endpoint = 'tcp://$UMEE_E2E_UMEE_VAL_HOST:9090'
-    rpc_timeout = "100ms"
-    tmrpc_endpoint = 'http://$UMEE_E2E_UMEE_VAL_HOST:26657'
-    [telemetry]
-    service-name = "price-feeder"
-    enabled = true
-    enable-hostname = true
-    enable-hostname-label = true
-    enable-service-label = true
-    type = "prometheus"
-    global-labels = [["chain-id", "test"]]
-EOF
+    tee $pfconfig <<-EOF
+gas_adjustment = 1.5
+provider_timeout = "5000ms"
+[server]
+listen_addr = "0.0.0.0:${PFPORT}"
+read_timeout = "20s"
+verbose_cors = true
+write_timeout = "20s"
+[[currency_pairs]]
+base = "UMEE"
+providers = [
+"mock",
+]
+quote = "USDT"
+[[currency_pairs]]
+base = "ATOM"
+providers = [
+"mock",
+]
+quote = "USDC"
+[[currency_pairs]]
+base = "USDC"
+providers = [
+"mock",
+]
+quote = "USD"
+[[currency_pairs]]
+base = "USDT"
+providers = [
+"mock",
+]
+quote = "USD"
+[account]
+address = $UMEE_E2E_PRICE_FEEDER_ADDRESS
+chain_id = "test"
+validator = $UMEE_E2E_PRICE_FEEDER_VALIDATOR
+[keyring]
+backend = "test"
+dir = "$UMEE_E2E_UMEE_VAL_KEY_DIR"
+[rpc]
+grpc_endpoint = "tcp://localhost:${GRPC}"
+rpc_timeout = "100ms"
+tmrpc_endpoint = "http://localhost:${RPC}"
+[telemetry]
+service_name = "price-feeder"
+enabled = true
+enable_hostname = true
+enable_hostname_label = true
+enable_service_label = true
+type = "prometheus"
+global_labels = [["chain-id", "test"]]
 
-    echo "INFO: Creating price-feeder $DAEMON-$a systemd service file"
+EOF
+    echo "INFO: Creating price-feeder $DAEMON-$a-pf systemd service file"
     echo "[Unit]
     Description=${DAEMON}-price-feeder daemon
     After=network.target
     [Service]
-    Environment="DAEMON_HOME=$DAEMON_HOME-$a"
-	Environment="DAEMON_NAME=$DAEMON"
-	Environment="DAEMON_ALLOW_DOWNLOAD_BINARIES=false"
-	Environment="DAEMON_RESTART_AFTER_UPGRADE=true"
-	Environment="UNSAFE_SKIP_BACKUP=false"
+    Environment="PRICE_FEEDER_PASS=test"
     Type=simple
     User=$USER
-    ExecStart=$(which price-feeder) $pfconfig
+    ExecStart=$(which price-feeder) ${pfconfig}
     Restart=on-failure
     RestartSec=3
     LimitNOFILE=4096
@@ -334,5 +334,4 @@ EOF
     echo "INFO: Starting $DAEMON-${a}-pf service"
     sudo -S systemctl daemon-reload
     sudo -S systemctl start $DAEMON-${a}-pf.service
-    sleep 3s
 done
