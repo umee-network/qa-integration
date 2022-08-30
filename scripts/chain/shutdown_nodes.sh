@@ -29,6 +29,8 @@ if [ $FILES_EXISTS == "true" ]; then
     do
         sudo -S systemctl stop $DAEMON-${a}.service
         echo "-- Stopped $DAEMON-${a}.service --"
+        sudo -S systemctl stop $DAEMON-${a}-pf.service
+        echo "-- Stopped $DAEMON-${a}-pf.service --"
     done
     echo "------- Running unsafe reset all ---------"
     for (( a=1; a<=$NUM_VALS; a++ ))
@@ -42,6 +44,8 @@ if [ $FILES_EXISTS == "true" ]; then
     do
     sudo -S systemctl disable $DAEMON-${a}.service
     echo "-- Executed sudo -S systemctl disable $DAEMON-${a}.service --"
+    sudo -S systemctl disable $DAEMON-${a}-pf.service
+    echo "-- Executed sudo -S systemctl disable $DAEMON-${a}-pf.service --"
     done
 else
     echo "----No simd services running-----"
