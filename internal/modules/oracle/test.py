@@ -98,7 +98,7 @@ class TestOracleModule(unittest.TestCase):
         status = tx_submit_prevote(validator2_acc["name"], vote_hash_2, validator2_home)
         self.assertTrue(status)
 
-        # # Query to verify 2nd prevote exists
+        # Query to verify 2nd prevote exists
         status, prevote_2 = query_aggregate_prevote(validator2_acc["address"])
         self.assertTrue(status)
         self.assertEqual(prevote_2["aggregate_prevote"]["hash"].upper(), vote_hash_2)
