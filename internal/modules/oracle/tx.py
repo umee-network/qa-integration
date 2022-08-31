@@ -12,11 +12,12 @@ def tx_submit_prevote(
     from_key,
     hash,
     home,
+    broadcast_mode='block',
     gas=DEFAULT_GAS,
 ):
     command = f"""{DAEMON} tx oracle exchange-rate-prevote {hash} \
 --chain-id {CHAINID} --keyring-backend test \
---home {home} --from {from_key} --node {RPC} --output json -y --gas {gas}"""
+--home {home} --from {from_key} --node {RPC} --output json -y --gas {gas} -b {broadcast_mode}"""
     return exec_command(command)
 
 # tx_submit_vote submits an aggregate vote tx given a salt, exchange
@@ -26,9 +27,10 @@ def tx_submit_vote(
     salt,
     home,
     exchange_rates,
+    broadcast_mode='block',
     gas=DEFAULT_GAS,
 ):
     command = f"""{DAEMON} tx oracle exchange-rate-vote {salt} {exchange_rates} \
 --chain-id {CHAINID} --keyring-backend test \
---home {home} --from {from_key} --node {RPC} --output json -y --gas {gas}"""
+--home {home} --from {from_key} --node {RPC} --output json -y --gas {gas} -b {broadcast_mode}"""
     return exec_command(command)

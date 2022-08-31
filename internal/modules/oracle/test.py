@@ -54,6 +54,12 @@ def get_block_height():
     _, message = node_status()
     return message["SyncInfo"]["latest_block_height"]
 
+def wait_for_next_voting_period():
+    block_height = int(get_block_height())
+    vp_block_height = (block_height % BLOCKS_PER_VOTING_PERIOD)
+    if vp_block_height > 0:
+        time.sleep((BLOCKS_PER_VOTING_PERIOD - vp_block_height) / 2)
+
 class TestOracleModule(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -62,17 +68,20 @@ class TestOracleModule(unittest.TestCase):
             proposal_file_or_name=update_params,
             proposal_type='param-change'
         )
+        time.sleep(20) # Wait for gov proposal to pass
 
     def test_query_oracle_params(self):
         status, res = query_params()
         self.assertTrue(status)
-        self.assertTrue(len(res['params']['accept_list']) >= 1, "It should have at least one token in the accept list")
+        self.assertEqual(len(res['params']['accept_list']), 3)
 
     # test_prevotes tests to make sure that we can submit prevotes
     def test_prevotes(self):
         # Get Hash
         vote_hash_1 = get_hash(EXCHANGE_RATES.ToString(), STATIC_SALT, validator1_acc["address"])
         vote_hash_2 = get_hash(EXCHANGE_RATES.ToString(), STATIC_SALT, validator2_acc["address"])
+
+        wait_for_next_voting_period()
 
         # Submit 1st prevote
         status = tx_submit_prevote(validator1_acc["name"], vote_hash_1, validator1_home)
@@ -83,11 +92,13 @@ class TestOracleModule(unittest.TestCase):
         self.assertTrue(status)
         self.assertEqual(prevote_1["aggregate_prevote"]["hash"].upper(), vote_hash_1)
 
-        # Submit 2nd prevote
+        wait_for_next_voting_period()
+
+        # # Submit 2nd prevote
         status = tx_submit_prevote(validator2_acc["name"], vote_hash_2, validator2_home)
         self.assertTrue(status)
 
-        # Query to verify 2nd prevote exists
+        # # Query to verify 2nd prevote exists
         status, prevote_2 = query_aggregate_prevote(validator2_acc["address"])
         self.assertTrue(status)
         self.assertEqual(prevote_2["aggregate_prevote"]["hash"].upper(), vote_hash_2)
@@ -99,37 +110,23 @@ class TestOracleModule(unittest.TestCase):
         # Get Hash
         vote_hash = get_hash(EXCHANGE_RATES.ToString(), STATIC_SALT, validator3_acc["address"])
 
-        # If the current block height is at the end of a voting period then sleep until
-        # the beginning of the next voting period so that the pre-vote and vote land in
-        # adjacent voting periods
-        block_height = int(get_block_height())
-        vp_block_height = (block_height % BLOCKS_PER_VOTING_PERIOD) + 1
-
-        # This targets the second to last and third to last blocks in a voting period.
-        # The get_block_height() function is delayed by a block by the time you read the
-        # value so it is not necessary to target the last block.
-        if vp_block_height == BLOCKS_PER_VOTING_PERIOD - 2:
-            time.sleep(1)
-        if vp_block_height == BLOCKS_PER_VOTING_PERIOD - 1:
-            time.sleep(0.5)
+        wait_for_next_voting_period()
 
         # Submit prevote
         status, prevote_1 = tx_submit_prevote(validator3_acc["name"], vote_hash, validator3_home)
         self.assertTrue(status)
 
         # Wait until next voting period
-        time.sleep(1.25)
+        time.sleep(1.5)
 
         # Submit vote
         status, vote_1 = tx_submit_vote(validator3_acc["name"], STATIC_SALT, validator3_home, EXCHANGE_RATES.ToString())
         self.assertTrue(status)
 
         # Query votes to make sure they exist, and are correct
-        # TODO - Add param to query specific blocks for test reliability
         status, vote_1 = query_aggregate_vote(validator3_acc["address"])
         self.assertTrue(status)
 
-        # TODO - fix this assert (only the umee price is currently returned)
         self.assertEqual(len(vote_1["aggregate_vote"]["exchange_rate_tuples"]), EXCHANGE_RATES.Len())
 
         for rate in vote_1["aggregate_vote"]["exchange_rate_tuples"]:
