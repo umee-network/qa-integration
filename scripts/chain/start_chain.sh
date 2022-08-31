@@ -236,9 +236,7 @@ do
     $DAEMON status --node tcp://localhost:${RPC}
 done
 
-
-# create systemd service for each price feeder instance
-
+echo "Installing price-feeder binary"
 cd $REPO/price-feeder/
 make install
 cd $CURPATH
@@ -249,74 +247,26 @@ do
     INC=$(($DIFF * 2))
     RPC=$((16657 + $INC))
     GRPC=$((9092 + $INC))
-    PFPORT=$((7171 + $INC))
+    PF_PORT=$((7171 + $INC))
 
-    pfconfig="${DAEMON_HOME}-${a}/price-feeder/config.toml"
-
-    mkdir -p "${DAEMON_HOME}-${a}/price-feeder"
-
-
-    touch $pfconfig
+    # Copy the price-feeder config template and replace variables
+    CONFIG_DIR="${DAEMON_HOME}-${a}/config"
+    PF_CONFIG="${CONFIG_DIR}/price-feeder.toml"
+    cp ../configs/price-feeder.toml $CONFIG_DIR
 
     UMEE_E2E_PRICE_FEEDER_VALIDATOR=$(eval "umeed keys show validator${a} --home ${DAEMON_HOME}-${a} --bech val --keyring-backend test --output json | jq .address")
     UMEE_E2E_PRICE_FEEDER_ADDRESS=$(eval "umeed keys show validator${a} --home ${DAEMON_HOME}-${a} --bech acc --keyring-backend test --output json | jq .address")
     UMEE_E2E_UMEE_VAL_KEY_DIR="${DAEMON_HOME}-${a}"
     UMEE_E2E_UMEE_VAL_HOST="tcp://localhost:${RPC}"
 
-    # setup price-feeder configuration
-    tee $pfconfig <<-EOF
-gas_adjustment = 1.5
-provider_timeout = "5000ms"
-[server]
-listen_addr = "0.0.0.0:${PFPORT}"
-read_timeout = "20s"
-verbose_cors = true
-write_timeout = "20s"
-[[currency_pairs]]
-base = "UMEE"
-providers = [
-"mock",
-]
-quote = "USDT"
-[[currency_pairs]]
-base = "ATOM"
-providers = [
-"mock",
-]
-quote = "USDC"
-[[currency_pairs]]
-base = "USDC"
-providers = [
-"mock",
-]
-quote = "USD"
-[[currency_pairs]]
-base = "USDT"
-providers = [
-"mock",
-]
-quote = "USD"
-[account]
-address = $UMEE_E2E_PRICE_FEEDER_ADDRESS
-chain_id = "test"
-validator = $UMEE_E2E_PRICE_FEEDER_VALIDATOR
-[keyring]
-backend = "test"
-dir = "$UMEE_E2E_UMEE_VAL_KEY_DIR"
-[rpc]
-grpc_endpoint = "tcp://localhost:${GRPC}"
-rpc_timeout = "100ms"
-tmrpc_endpoint = "http://localhost:${RPC}"
-[telemetry]
-service_name = "price-feeder"
-enabled = true
-enable_hostname = true
-enable_hostname_label = true
-enable_service_label = true
-type = "prometheus"
-global_labels = [["chain-id", "test"]]
+    sed -i "s/\$PF_PORT/${PF_PORT}/g" $PF_CONFIG
+    sed -i "s/\"\$UMEE_E2E_PRICE_FEEDER_VALIDATOR\"/${UMEE_E2E_PRICE_FEEDER_VALIDATOR}/g" $PF_CONFIG
+    sed -i "s/\"\$UMEE_E2E_PRICE_FEEDER_ADDRESS\"/${UMEE_E2E_PRICE_FEEDER_ADDRESS}/g" $PF_CONFIG
+    sed -i "s|\"\$UMEE_E2E_UMEE_VAL_KEY_DIR\"|\"${UMEE_E2E_UMEE_VAL_KEY_DIR}\"|g" $PF_CONFIG
+    sed -i "s/\$GRPC/${GRPC}/" $PF_CONFIG
+    sed -i "s/\$RPC/${RPC}/" $PF_CONFIG
 
-EOF
+    # Create systemd service files
     echo "INFO: Creating price-feeder $DAEMON-$a-pf systemd service file"
     echo "[Unit]
     Description=${DAEMON}-price-feeder daemon
@@ -325,7 +275,7 @@ EOF
     Environment="PRICE_FEEDER_PASS=test"
     Type=simple
     User=$USER
-    ExecStart=$(which price-feeder) ${pfconfig}
+    ExecStart=$(which price-feeder) ${PF_CONFIG}
     Restart=on-failure
     RestartSec=3
     LimitNOFILE=4096

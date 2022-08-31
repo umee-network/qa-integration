@@ -1,0 +1,50 @@
+gas_adjustment = 1.5
+provider_timeout = "5000ms"
+[server]
+listen_addr = "0.0.0.0:$PF_PORT"
+read_timeout = "20s"
+verbose_cors = true
+write_timeout = "20s"
+[[currency_pairs]]
+base = "UMEE"
+providers = [
+"mock",
+]
+quote = "USDT"
+[[currency_pairs]]
+base = "ATOM"
+providers = [
+"mock",
+]
+quote = "USDC"
+[[currency_pairs]]
+base = "USDC"
+providers = [
+"mock",
+]
+quote = "USD"
+[[currency_pairs]]
+base = "USDT"
+providers = [
+"mock",
+]
+quote = "USD"
+[account]
+address = "$UMEE_E2E_PRICE_FEEDER_ADDRESS"
+chain_id = "test"
+validator = "$UMEE_E2E_PRICE_FEEDER_VALIDATOR"
+[keyring]
+backend = "test"
+dir = "$UMEE_E2E_UMEE_VAL_KEY_DIR"
+[rpc]
+grpc_endpoint = "tcp://localhost:$GRPC"
+rpc_timeout = "100ms"
+tmrpc_endpoint = "http://localhost:$RPC"
+[telemetry]
+service_name = "price-feeder"
+enabled = true
+enable_hostname = true
+enable_hostname_label = true
+enable_service_label = true
+type = "prometheus"
+global_labels = [["chain-id", "test"]]
