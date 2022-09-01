@@ -4,10 +4,6 @@ import unittest
 import inspect
 import pathlib
 from utils import env
-from internal.core.keys import keys_show
-from internal.modules.gov.tx import submit_and_pass_proposal
-from internal.modules.bank.query import query_balances
-
 from modules.leverage.query import (
     query_registered_tokens,
 )
@@ -19,6 +15,9 @@ from modules.leverage.tx import (
     tx_borrow,
     tx_repay
 )
+from internal.core.keys import keys_show
+from internal.modules.gov.tx import submit_and_pass_proposal
+from internal.modules.bank.query import query_balances
 
 logging.basicConfig(format="%(message)s", level=logging.DEBUG)
 
@@ -139,46 +138,46 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         self.assertEqual(acc1_balance["balances"][2]["denom"], "uumee")
         self.assertEqual(acc1_balance["balances"][2]["amount"], "1000000000000")
 
-    def test_simple_functional(self):
-        # Query User A and User B bank balance
-        status, acc1_balance = query_balances(acc1["address"])
-        self.assertTrue(status)
-        print("\nacc1_balance at start of test: ", acc1_balance["balances"])
-        self.assertEqual(acc1_balance["balances"][0]["denom"], "ibc/atom")
-        self.assertEqual(acc1_balance["balances"][0]["amount"], "10000000000")
-        self.assertEqual(acc1_balance["balances"][1]["denom"], "ibc/juno")
-        self.assertEqual(acc1_balance["balances"][1]["amount"], "20000000000")
-        self.assertEqual(acc1_balance["balances"][2]["denom"], "uumee")
-        self.assertEqual(acc1_balance["balances"][2]["amount"], "1000000000000")
-        status, acc2_balance = query_balances(acc2["address"])
-        self.assertTrue(status)
-        print("\nacc2_balance at start of test: ", acc2_balance["balances"])
-        self.assertEqual(acc1_balance["balances"][0]["denom"], "ibc/atom")
-        self.assertEqual(acc1_balance["balances"][0]["amount"], "10000000000")
-        self.assertEqual(acc1_balance["balances"][1]["denom"], "ibc/juno")
-        self.assertEqual(acc1_balance["balances"][1]["amount"], "20000000000")
-        self.assertEqual(acc1_balance["balances"][2]["denom"], "uumee")
-        self.assertEqual(acc1_balance["balances"][2]["amount"], "1000000000000")
+    # def test_simple_functional(self):
+    #     # Query User A and User B bank balance
+    #     status, acc1_balance = query_balances(acc1["address"])
+    #     self.assertTrue(status)
+    #     print("\nacc1_balance at start of test: ", acc1_balance["balances"])
+    #     self.assertEqual(acc1_balance["balances"][0]["denom"], "ibc/atom")
+    #     self.assertEqual(acc1_balance["balances"][0]["amount"], "10000000000")
+    #     self.assertEqual(acc1_balance["balances"][1]["denom"], "ibc/juno")
+    #     self.assertEqual(acc1_balance["balances"][1]["amount"], "20000000000")
+    #     self.assertEqual(acc1_balance["balances"][2]["denom"], "uumee")
+    #     self.assertEqual(acc1_balance["balances"][2]["amount"], "1000000000000")
+    #     status, acc2_balance = query_balances(acc2["address"])
+    #     self.assertTrue(status)
+    #     print("\nacc2_balance at start of test: ", acc2_balance["balances"])
+    #     self.assertEqual(acc1_balance["balances"][0]["denom"], "ibc/atom")
+    #     self.assertEqual(acc1_balance["balances"][0]["amount"], "10000000000")
+    #     self.assertEqual(acc1_balance["balances"][1]["denom"], "ibc/juno")
+    #     self.assertEqual(acc1_balance["balances"][1]["amount"], "20000000000")
+    #     self.assertEqual(acc1_balance["balances"][2]["denom"], "uumee")
+    #     self.assertEqual(acc1_balance["balances"][2]["amount"], "1000000000000")
 
-        # User A supplies and collaterlizes 10000 umee
-        status = tx_supply(acc1["name"], acc1["address"], "10000000000uumee", validator1_home)
-        self.assertTrue(status)
-        time.sleep(1)
-        status = tx_collateralize(acc1["name"], acc1["address"], "10000000000u/uumee", validator1_home)
-        self.assertTrue(status)
-        time.sleep(1)
+    #     # User A supplies and collaterlizes 10000 umee
+    #     status = tx_supply(acc1["name"], acc1["address"], "10000000000uumee", validator1_home)
+    #     self.assertTrue(status)
+    #     time.sleep(1)
+    #     status = tx_collateralize(acc1["name"], acc1["address"], "10000000000u/uumee", validator1_home)
+    #     self.assertTrue(status)
+    #     time.sleep(1)
 
-        # User B supplies 2 atom
-        status = tx_supply(acc2["name"], acc2["address"], "2000000ibc/atom", validator1_home)
-        self.assertTrue(status)
-        time.sleep(1)
+    #     # User B supplies 2 atom
+    #     status = tx_supply(acc2["name"], acc2["address"], "2000000ibc/atom", validator1_home)
+    #     self.assertTrue(status)
+    #     time.sleep(1)
 
-        status, acc1_balance = query_balances(acc1["address"])
-        self.assertTrue(status)
-        print("\nacc1_balance at end of test: ", acc1_balance["balances"])
-        status, acc2_balance = query_balances(acc2["address"])
-        self.assertTrue(status)
-        print("\nacc2_balance at end of test: ", acc2_balance["balances"])
+    #     status, acc1_balance = query_balances(acc1["address"])
+    #     self.assertTrue(status)
+    #     print("\nacc1_balance at end of test: ", acc1_balance["balances"])
+    #     status, acc2_balance = query_balances(acc2["address"])
+    #     self.assertTrue(status)
+    #     print("\nacc2_balance at end of test: ", acc2_balance["balances"])
 
 
 if __name__ == "__main__":
