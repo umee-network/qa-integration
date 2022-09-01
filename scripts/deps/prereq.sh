@@ -27,7 +27,8 @@ install_go () {
   source ~/.bashrc
 }
 
-CURPATH=`dirname $(realpath "$0")`
+# get absolute parent directory path of current file
+CURPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 cd $CURPATH
 source ../../env-umee
 

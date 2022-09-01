@@ -6,7 +6,7 @@
 set -e
 
 # get absolute parent directory path of current file
-CURPATH=`dirname $(realpath "$0")`
+CURPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 echo $CURPATH
 cd $CURPATH
 
