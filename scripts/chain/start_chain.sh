@@ -164,11 +164,11 @@ jq '.app_state["gravity"]["params"]["bridge_ethereum_address"]="0x93b5122922F9dC
     | .app_state["gravity"]["gravity_nonces"]["latest_valset_nonce"]="0"
     | .app_state["gravity"]["gravity_nonces"]["last_observed_nonce"]="0"' \
     $DAEMON_HOME-1/config/genesis.json > $DAEMON_HOME-1/config/tmp_genesis.json && mv $DAEMON_HOME-1/config/tmp_genesis.json $DAEMON_HOME-1/config/genesis.json
-sed -i "s/172800000000000/${EVIDENCE_AGE}/g" $DAEMON_HOME-1/config/genesis.json
-sed -i "s/172800s/${GOV_DEFAULT_PERIOD}/g" $DAEMON_HOME-1/config/genesis.json
-sed -i "s/stake/$DENOM/g" $DAEMON_HOME-1/config/genesis.json
-sed -i 's/"downtime_jail_duration": "600s"/"downtime_jail_duration": "'${DOWNTIME_JAIL_DURATION}'"/' $DAEMON_HOME-1/config/genesis.json
-sed -i 's/"unbonding_time": "1814400s"/"unbonding_time": "'${UNBONDING_PERIOD}'"/' $DAEMON_HOME-1/config/genesis.json
+sed -i -e "s/172800000000000/${EVIDENCE_AGE}/g" $DAEMON_HOME-1/config/genesis.json
+sed -i -e "s/172800s/${GOV_DEFAULT_PERIOD}/g" $DAEMON_HOME-1/config/genesis.json
+sed -i -e "s/stake/$DENOM/g" $DAEMON_HOME-1/config/genesis.json
+sed -i -e 's/"downtime_jail_duration": "600s"/"downtime_jail_duration": "'${DOWNTIME_JAIL_DURATION}'"/' $DAEMON_HOME-1/config/genesis.json
+sed -i -e 's/"unbonding_time": "1814400s"/"unbonding_time": "'${UNBONDING_PERIOD}'"/' $DAEMON_HOME-1/config/genesis.json
 echo "INFO: Distribute genesis.json of validator-1 to remaining nodes"
 for (( a=2; a<=$NUM_VALS; a++ ))
 do
@@ -209,17 +209,17 @@ do
     GRPC=$((9092 + $INC)) #increment grpc poprt
     WGRPC=$((9093 + $INC)) #increment web grpc port
     echo "INFO: Updating validator-$a chain config"
-    sed -i 's#tcp://127.0.0.1:26657#tcp://0.0.0.0:'${RPC}'#g' $DAEMON_HOME-$a/config/config.toml
-    sed -i 's#tcp://0.0.0.0:26656#tcp://0.0.0.0:'${LADDR}'#g' $DAEMON_HOME-$a/config/config.toml
-    sed -i '/persistent_peers =/c\persistent_peers = "'"$PERSISTENT_PEERS"'"' $DAEMON_HOME-$a/config/config.toml
-    sed -i '/allow_duplicate_ip =/c\allow_duplicate_ip = true' $DAEMON_HOME-$a/config/config.toml
-    sed -i '/pprof_laddr =/c\# pprof_laddr = "localhost:6060"' $DAEMON_HOME-$a/config/config.toml
-    sed -i 's#0.0.0.0:9090#0.0.0.0:'${GRPC}'#g' $DAEMON_HOME-$a/config/app.toml
-    sed -i 's#0.0.0.0:9091#0.0.0.0:'${WGRPC}'#g' $DAEMON_HOME-$a/config/app.toml
-    sed -i '/max_num_inbound_peers =/c\max_num_inbound_peers = 140' $DAEMON_HOME-$a/config/config.toml
-    sed -i '/max_num_outbound_peers =/c\max_num_outbound_peers = 110' $DAEMON_HOME-$a/config/config.toml
-    sed -i '/skip_timeout_commit = false/c\skip_timeout_commit = true' $DAEMON_HOME-$a/config/config.toml
-    sed -i '/minimum-gas-prices = ""/c\minimum-gas-prices = "0uumee"' $DAEMON_HOME-$a/config/app.toml
+    sed -i -e 's#tcp://127.0.0.1:26657#tcp://0.0.0.0:'${RPC}'#g' $DAEMON_HOME-$a/config/config.toml
+    sed -i -e 's#tcp://0.0.0.0:26656#tcp://0.0.0.0:'${LADDR}'#g' $DAEMON_HOME-$a/config/config.toml
+    sed -i -e 's#persistent_peers =.*$#persistent_peers = "'$PERSISTENT_PEERS'"#' $DAEMON_HOME-$a/config/config.toml
+    sed -i -e 's#allow_duplicate_ip =.*$#allow_duplicate_ip = true#' $DAEMON_HOME-$a/config/config.toml
+    sed -i -e 's#pprof_laddr =.*$#pprof_laddr = "localhost:6060"#' $DAEMON_HOME-$a/config/config.toml
+    sed -i -e 's#0.0.0.0:9090#0.0.0.0:'${GRPC}'#g' $DAEMON_HOME-$a/config/app.toml
+    sed -i -e 's#0.0.0.0:9091#0.0.0.0:'${WGRPC}'#g' $DAEMON_HOME-$a/config/app.toml
+    sed -i -e 's#max_num_inbound_peers =.*$#max_num_inbound_peers = 140#' $DAEMON_HOME-$a/config/config.toml
+    sed -i -e 's#max_num_outbound_peers =.*$#max_num_outbound_peers = 110#' $DAEMON_HOME-$a/config/config.toml
+    sed -i -e 's#skip_timeout_commit = false#skip_timeout_commit = true#' $DAEMON_HOME-$a/config/config.toml
+    sed -i -e 's#minimum-gas-prices = ""#minimum-gas-prices = "0uumee"#' $DAEMON_HOME-$a/config/app.toml
 
     price_feeder_set_config $a
 done

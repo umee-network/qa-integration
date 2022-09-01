@@ -22,7 +22,7 @@ start_umeed() {
     start_umeed_pid $VAL_NUM
   fi
   echo "waiting for umeed start"
-  sleep 3s
+  sleep 3
 
   DIFF=$(($VAL_NUM - 1))
   INC=$(($DIFF * 2))
@@ -166,10 +166,10 @@ price_feeder_set_config() {
   UMEE_VAL_KEY_DIR="${DAEMON_HOME}-${VAL_NUM}"
   UMEE_VAL_HOST="tcp://localhost:${RPC}"
 
-  sed -i "s/\$PF_PORT/${PF_PORT}/g" $PF_CONFIG
-  sed -i "s/\"\$PRICE_FEEDER_VALIDATOR\"/${PRICE_FEEDER_VALIDATOR}/g" $PF_CONFIG
-  sed -i "s/\"\$PRICE_FEEDER_ADDRESS\"/${PRICE_FEEDER_ADDRESS}/g" $PF_CONFIG
-  sed -i "s|\"\$UMEE_VAL_KEY_DIR\"|\"${UMEE_VAL_KEY_DIR}\"|g" $PF_CONFIG
-  sed -i "s/\$GRPC/${GRPC}/" $PF_CONFIG
-  sed -i "s/\$RPC/${RPC}/" $PF_CONFIG
+  sed -i -e "s/\$PF_PORT/${PF_PORT}/g" $PF_CONFIG
+  sed -i -e "s/\"\$PRICE_FEEDER_VALIDATOR\"/${PRICE_FEEDER_VALIDATOR}/g" $PF_CONFIG
+  sed -i -e "s/\"\$PRICE_FEEDER_ADDRESS\"/${PRICE_FEEDER_ADDRESS}/g" $PF_CONFIG
+  sed -i -e "s|\"\$UMEE_VAL_KEY_DIR\"|\"${UMEE_VAL_KEY_DIR}\"|g" $PF_CONFIG
+  sed -i -e "s/\$GRPC/${GRPC}/" $PF_CONFIG
+  sed -i -e "s/\$RPC/${RPC}/" $PF_CONFIG
 }
