@@ -44,17 +44,20 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
 
     def test_query_total_supply(self):
         status, res = query_registered_tokens()
-        print("res: ", res)
         self.assertTrue(status)
-        self.assertTrue(len(res['registry']) >= 1, "It should have at least one token registered")
+        self.assertTrue(len(res['registry']) >= 3, "It should have three tokens registered")
 
     def test_supply_withdraw(self):
         # Query User A bank balance of uumee
         status, acc1_balance = query_balances(acc1["address"])
         self.assertTrue(status)
-        print("acc1_balance before supply: ", acc1_balance["balances"])
-        self.assertEqual(acc1_balance["balances"][0]["denom"], "uumee")
-        self.assertEqual(acc1_balance["balances"][0]["amount"], "1000000000000")
+        print("\nacc1_balance before supply: ", acc1_balance["balances"])
+        self.assertEqual(acc1_balance["balances"][0]["denom"], "ibc/atom")
+        self.assertEqual(acc1_balance["balances"][0]["amount"], "10000000000")
+        self.assertEqual(acc1_balance["balances"][1]["denom"], "ibc/juno")
+        self.assertEqual(acc1_balance["balances"][1]["amount"], "20000000000")
+        self.assertEqual(acc1_balance["balances"][2]["denom"], "uumee")
+        self.assertEqual(acc1_balance["balances"][2]["amount"], "1000000000000")
 
         # User A supplies between 10% and 90% of their uumee balance
         status = tx_supply(acc1["name"], acc1["address"], "500000000000uumee", validator1_home)
@@ -64,11 +67,15 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         # Query User A bank balance of u/uumee
         status, acc1_balance = query_balances(acc1["address"])
         self.assertTrue(status)
-        print("acc1_balance after supply: ", acc1_balance["balances"])
-        self.assertEqual(acc1_balance["balances"][0]["denom"], "u/uumee")
-        self.assertEqual(acc1_balance["balances"][0]["amount"], "500000000000")
-        self.assertEqual(acc1_balance["balances"][1]["denom"], "uumee")
-        self.assertEqual(acc1_balance["balances"][1]["amount"], "500000000000")
+        print("\nacc1_balance after supply: ", acc1_balance["balances"])
+        self.assertEqual(acc1_balance["balances"][0]["denom"], "ibc/atom")
+        self.assertEqual(acc1_balance["balances"][0]["amount"], "10000000000")
+        self.assertEqual(acc1_balance["balances"][1]["denom"], "ibc/juno")
+        self.assertEqual(acc1_balance["balances"][1]["amount"], "20000000000")
+        self.assertEqual(acc1_balance["balances"][2]["denom"], "u/uumee")
+        self.assertEqual(acc1_balance["balances"][2]["amount"], "500000000000")
+        self.assertEqual(acc1_balance["balances"][3]["denom"], "uumee")
+        self.assertEqual(acc1_balance["balances"][3]["amount"], "500000000000")
 
         # User A withdraws between 10% and 90% of their u/uumee balance
         status = tx_withdraw(acc1["name"], acc1["address"], "500000000000u/uumee", validator1_home)
@@ -78,43 +85,59 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         # Query User A bank balance of uumee
         status, acc1_balance = query_balances(acc1["address"])
         self.assertTrue(status)
-        print("acc1_balance after withdraw: ", acc1_balance["balances"])
-        self.assertEqual(acc1_balance["balances"][0]["denom"], "uumee")
-        self.assertEqual(acc1_balance["balances"][0]["amount"], "1000000000000")
+        print("\nacc1_balance after withdraw: ", acc1_balance["balances"])
+        self.assertEqual(acc1_balance["balances"][0]["denom"], "ibc/atom")
+        self.assertEqual(acc1_balance["balances"][0]["amount"], "10000000000")
+        self.assertEqual(acc1_balance["balances"][1]["denom"], "ibc/juno")
+        self.assertEqual(acc1_balance["balances"][1]["amount"], "20000000000")
+        self.assertEqual(acc1_balance["balances"][2]["denom"], "uumee")
+        self.assertEqual(acc1_balance["balances"][2]["amount"], "1000000000000")
 
-    def test_supply_withdraw_aton(self):
-        # Query User A bank balance of uumee
+    def test_supply_withdraw_atom(self):
+        # Query User A bank balance of atom
         status, acc1_balance = query_balances(acc1["address"])
         self.assertTrue(status)
-        print("acc1_balance before supply: ", acc1_balance["balances"])
-        self.assertEqual(acc1_balance["balances"][0]["denom"], "uumee")
-        self.assertEqual(acc1_balance["balances"][0]["amount"], "1000000000000")
+        print("\nacc1_balance before supply: ", acc1_balance["balances"])
+        self.assertEqual(acc1_balance["balances"][0]["denom"], "ibc/atom")
+        self.assertEqual(acc1_balance["balances"][0]["amount"], "10000000000")
+        self.assertEqual(acc1_balance["balances"][1]["denom"], "ibc/juno")
+        self.assertEqual(acc1_balance["balances"][1]["amount"], "20000000000")
+        self.assertEqual(acc1_balance["balances"][2]["denom"], "uumee")
+        self.assertEqual(acc1_balance["balances"][2]["amount"], "1000000000000")
 
-        # User A supplies between 10% and 90% of their uumee balance
-        status = tx_supply(acc1["name"], acc1["address"], "500000000000uumee", validator1_home)
+        # User A supplies between 10% and 90% of their atom balance
+        status = tx_supply(acc1["name"], acc1["address"], "5000000000ibc/atom", validator1_home)
         self.assertTrue(status)
         time.sleep(1)
 
         # Query User A bank balance of u/uumee
         status, acc1_balance = query_balances(acc1["address"])
         self.assertTrue(status)
-        print("acc1_balance after supply: ", acc1_balance["balances"])
-        self.assertEqual(acc1_balance["balances"][0]["denom"], "u/uumee")
-        self.assertEqual(acc1_balance["balances"][0]["amount"], "500000000000")
-        self.assertEqual(acc1_balance["balances"][1]["denom"], "uumee")
-        self.assertEqual(acc1_balance["balances"][1]["amount"], "500000000000")
+        print("\nacc1_balance after supply: ", acc1_balance["balances"])
+        self.assertEqual(acc1_balance["balances"][0]["denom"], "ibc/atom")
+        self.assertEqual(acc1_balance["balances"][0]["amount"], "5000000000")
+        self.assertEqual(acc1_balance["balances"][1]["denom"], "ibc/juno")
+        self.assertEqual(acc1_balance["balances"][1]["amount"], "20000000000")
+        self.assertEqual(acc1_balance["balances"][2]["denom"], "u/ibc/atom")
+        self.assertEqual(acc1_balance["balances"][2]["amount"], "5000000000")
+        self.assertEqual(acc1_balance["balances"][3]["denom"], "uumee")
+        self.assertEqual(acc1_balance["balances"][3]["amount"], "1000000000000")
 
-        # User A withdraws between 10% and 90% of their u/uumee balance
-        status = tx_withdraw(acc1["name"], acc1["address"], "500000000000u/uumee", validator1_home)
+        # User A withdraws between 10% and 90% of their u/ibc/atom balance
+        status = tx_withdraw(acc1["name"], acc1["address"], "5000000000u/ibc/atom", validator1_home)
         self.assertTrue(status)
         time.sleep(1)
 
-        # Query User A bank balance of uumee
+        # Query User A bank balance of atom
         status, acc1_balance = query_balances(acc1["address"])
         self.assertTrue(status)
-        print("acc1_balance after withdraw: ", acc1_balance["balances"])
-        self.assertEqual(acc1_balance["balances"][0]["denom"], "uumee")
-        self.assertEqual(acc1_balance["balances"][0]["amount"], "1000000000000")
+        print("\nacc1_balance after withdraw: ", acc1_balance["balances"])
+        self.assertEqual(acc1_balance["balances"][0]["denom"], "ibc/atom")
+        self.assertEqual(acc1_balance["balances"][0]["amount"], "10000000000")
+        self.assertEqual(acc1_balance["balances"][1]["denom"], "ibc/juno")
+        self.assertEqual(acc1_balance["balances"][1]["amount"], "20000000000")
+        self.assertEqual(acc1_balance["balances"][2]["denom"], "uumee")
+        self.assertEqual(acc1_balance["balances"][2]["amount"], "1000000000000")
 
 
 if __name__ == "__main__":
