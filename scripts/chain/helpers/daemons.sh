@@ -16,7 +16,6 @@ CURPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 start_umeed() {
   VAL_NUM=$1
 
-
   # if command_exists systemctl ; then
   #   start_umeed_systemctl $VAL_NUM
   # else
@@ -107,8 +106,11 @@ start_price_feeder_pid() {
   PF_DAEMON=$(which price-feeder)
 
   echo "INFO: Starting $DAEMON-$VAL_NUM at $DAEMON_HOME-$VAL_NUM home"
-  echo "Executed: PRICE_FEEDER_PASS=test $PF_DAEMON ${PF_CONFIG} --log-level $LOG_LEVEL > $log_path 2>&1 &"
-  PRICE_FEEDER_PASS=test $PF_DAEMON ${PF_CONFIG} --log-level $LOG_LEVEL >& $log_path  &
+  cat $PF_CONFIG
+  echo "PRICE_FEEDER_PASS=test $PF_DAEMON ${PF_CONFIG} --log-level $LOG_LEVEL > $log_path 2>&1 &"
+  export PRICE_FEEDER_PASS=test
+
+  PRICE_FEEDER_PASS=test $PF_DAEMON ${PF_CONFIG} --log-level $LOG_LEVEL > $log_path 2>&1 &
 
   echo $! > $pid_path
   pid_value=$(cat $pid_path)
