@@ -12,9 +12,9 @@ CURPATH=`dirname $(realpath "$0")`
 cd $CURPATH
 source ../../env
 
-if command_exists go ; then
-  echo "Golang is already installed"
-else
+# if command_exists go ; then
+#   echo "Golang is already installed"
+# else
   sudo rm -rf /usr/local/go
   echo "Install dependencies"
   sudo apt update
@@ -31,7 +31,7 @@ else
   echo "" >> ~/.bashrc
   echo 'export GOROOT=/usr/local/go' >> ~/.bashrc
   source ~/.bashrc
-fi
+# fi
 which go
 go version
 
