@@ -12,32 +12,35 @@ def query_exchange_rates():
 
 # query_exchange_rate queries the price of an exchange rate
 def query_exchange_rate(asset):
-    command = f"""{DAEMON} q oracle exchange-rate ${asset} --node {RPC} \
+    command = f"""{DAEMON} q oracle exchange-rate {asset} --node {RPC} \
 --chain-id {CHAINID} --output json"""
     return exec_command(command)
 
 def query_aggregate_prevote(valAddress):
-    command = f"""{DAEMON} q oracle aggregate-prevotes ${valAddress} --node {RPC} \
+    command = f"""{DAEMON} q oracle aggregate-prevotes {valAddress} --node {RPC} \
 --chain-id {CHAINID} --output json"""
     return exec_command(command)
 
 def query_aggregate_vote(valAddress):
-    command = f"""{DAEMON} q oracle aggregate-votes ${valAddress} --node {RPC} \
+    command = f"""{DAEMON} q oracle aggregate-votes {valAddress} --node {RPC} \
 --chain-id {CHAINID} --output json"""
     return exec_command(command)
 
 def query_feeder_delegation(valAddress):
-    command = f"""{DAEMON} q oracle feeder-delegation ${valAddress} --node {RPC} \
+    command = f"""{DAEMON} q oracle feeder-delegation {valAddress} --node {RPC} \
 --chain-id {CHAINID} --output json"""
     return exec_command(command)
 
 def query_miss_counter(valAddress):
-    command = f"""{DAEMON} q oracle miss-counter ${valAddress} --node {RPC} \
+    command = f"""{DAEMON} q oracle miss-counter {valAddress} --node {RPC} \
 --chain-id {CHAINID} --output json"""
     return exec_command(command)
-
 
 def query_params():
     command = f"""{DAEMON} q oracle params --node {RPC} \
 --chain-id {CHAINID} --output json"""
+    return exec_command(command)
+
+def node_status():
+    command = f"{DAEMON} status --node {RPC}"
     return exec_command(command)
