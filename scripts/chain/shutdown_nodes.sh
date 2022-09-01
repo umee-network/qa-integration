@@ -39,13 +39,15 @@ if [ $FILES_EXISTS == "true" ]; then
             kill -s 15 $pid_value
             echo "-- Stopped $DAEMON-${a} by killing PID: $pid_value --"
         fi
+        sudo -S systemctl stop $DAEMON-${a}-pf.service
+        echo "-- Stopped $DAEMON-${a}-pf.service --"
     done
     echo "------- Running unsafe reset all ---------"
     for (( a=1; a<=$NUM_VALS; a++ ))
     do
         $DAEMON tendermint unsafe-reset-all  --home $DAEMON_HOME-$a
         rm -rf $DAEMON_HOME-$a
-        echo "-- Executed $DAEMON unsafe-reset-all --home $DAEMON_HOME-$a --"
+        echo "-- Executed $DAEMON unsafe-reset-all  --home $DAEMON_HOME-$a --"
     done
     if [ -x "$(command -v systemctl)" ]; then
         echo "---------- Disabling systemd process files --------"
@@ -53,6 +55,8 @@ if [ $FILES_EXISTS == "true" ]; then
         do
             sudo -S systemctl disable $DAEMON-${a}.service
             echo "-- Executed sudo -S systemctl disable $DAEMON-${a}.service --"
+    sudo -S systemctl disable $DAEMON-${a}-pf.service
+    echo "-- Executed sudo -S systemctl disable $DAEMON-${a}-pf.service --"
         done
     fi
 else

@@ -256,3 +256,53 @@ do
     echo "Pid:"
     echo "  * cat $pid_path = $pid_value"
 done
+
+echo "Installing price-feeder binary"
+cd $REPO/price-feeder/
+make install
+cd $CURPATH
+
+for (( a=1; a<=$NUM_VALS; a++ ))
+do
+    DIFF=$(($a - 1))
+    INC=$(($DIFF * 2))
+    RPC=$((16657 + $INC))
+    GRPC=$((9092 + $INC))
+    PF_PORT=$((7171 + $INC))
+
+    # Copy the price-feeder config template and replace variables
+    CONFIG_DIR="${DAEMON_HOME}-${a}/config"
+    PF_CONFIG="${CONFIG_DIR}/price-feeder.toml"
+    cp ../configs/price-feeder.toml $CONFIG_DIR
+
+    PRICE_FEEDER_VALIDATOR=$(eval "umeed keys show validator${a} --home ${DAEMON_HOME}-${a} --bech val --keyring-backend test --output json | jq .address")
+    PRICE_FEEDER_ADDRESS=$(eval "umeed keys show validator${a} --home ${DAEMON_HOME}-${a} --bech acc --keyring-backend test --output json | jq .address")
+    UMEE_VAL_KEY_DIR="${DAEMON_HOME}-${a}"
+    UMEE_VAL_HOST="tcp://localhost:${RPC}"
+
+    sed -i "s/\$PF_PORT/${PF_PORT}/g" $PF_CONFIG
+    sed -i "s/\"\$PRICE_FEEDER_VALIDATOR\"/${PRICE_FEEDER_VALIDATOR}/g" $PF_CONFIG
+    sed -i "s/\"\$PRICE_FEEDER_ADDRESS\"/${PRICE_FEEDER_ADDRESS}/g" $PF_CONFIG
+    sed -i "s|\"\$UMEE_VAL_KEY_DIR\"|\"${UMEE_VAL_KEY_DIR}\"|g" $PF_CONFIG
+    sed -i "s/\$GRPC/${GRPC}/" $PF_CONFIG
+    sed -i "s/\$RPC/${RPC}/" $PF_CONFIG
+
+    # Create systemd service files
+    echo "INFO: Creating price-feeder $DAEMON-$a-pf systemd service file"
+    echo "[Unit]
+    Description=${DAEMON}-price-feeder daemon
+    After=network.target
+    [Service]
+    Environment="PRICE_FEEDER_PASS=test"
+    Type=simple
+    User=$USER
+    ExecStart=$(which price-feeder) ${PF_CONFIG}
+    Restart=on-failure
+    RestartSec=3
+    LimitNOFILE=4096
+    [Install]
+    WantedBy=multi-user.target" | sudo tee "/lib/systemd/system/$DAEMON-${a}-pf.service"
+    echo "INFO: Starting $DAEMON-${a}-pf service"
+    sudo -S systemctl daemon-reload
+    sudo -S systemctl start $DAEMON-${a}-pf.service
+done
