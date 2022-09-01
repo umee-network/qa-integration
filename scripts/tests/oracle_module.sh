@@ -1,6 +1,6 @@
 #/bin/sh
 
-## This script tests the unit tests inside the leverage module
+## This script tests the unit tests inside the oracle module
 
 set -e
 
