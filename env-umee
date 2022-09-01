@@ -1,4 +1,4 @@
-goversion="1.18"
+goversion="1.19"
 DAEMON=umeed
 DENOM=uumee
 CHAINID=test
