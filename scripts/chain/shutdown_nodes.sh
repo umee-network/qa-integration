@@ -17,6 +17,8 @@ cd $CURPATH
 
 FILES_EXISTS="true"
 
+echo "NUM_VALS: $NUM_VALS"
+
 # checking simd-* service files exist or not
 for (( a=1; a<=$NUM_VALS; a++ ))
 do
@@ -31,14 +33,14 @@ if [ $FILES_EXISTS == "true" ]; then
     echo "---------- Stopping $DAEMON-${a} --------"
     for (( a=1; a<=$NUM_VALS; a++ ))
     do
-        if command_exists systemctl ; then
-            stop_service $DAEMON-${a}.service
-            stop_service $DAEMON-${a}-pf.service
-            continue
-        fi
+        # if command_exists systemctl ; then
+        #     stop_service $DAEMON-${a}.service
+        #     stop_service $DAEMON-${a}-pf.service
+        #     continue
+        # fi
 
-        kill_process $DAEMON_HOME-${a}/pid
-        kill_process $DAEMON_HOME-${a}-pf/pid
+        kill_process $DAEMON_HOME-${a}/pid.${DAEMON}
+        kill_process $DAEMON_HOME-${a}/pid.pf
     done
 
     echo "------- Running unsafe reset all ---------"
@@ -49,14 +51,14 @@ if [ $FILES_EXISTS == "true" ]; then
         echo "-- Executed $DAEMON unsafe-reset-all --home $DAEMON_HOME-$a --"
     done
 
-    if command_exists systemctl ; then
-        echo "---------- Disabling systemd process files --------"
-        for (( a=1; a<=$NUM_VALS; a++ ))
-        do
-            disable_service $DAEMON-${a}.service
-            disable_service $DAEMON-${a}-pf.service
-        done
-    fi
+    # if command_exists systemctl ; then
+    #     echo "---------- Disabling systemd process files --------"
+    #     for (( a=1; a<=$NUM_VALS; a++ ))
+    #     do
+    #         disable_service $DAEMON-${a}
+    #         disable_service $DAEMON-${a}-pf
+    #     done
+    # fi
 else
     echo "----No simd services running-----"
 fi

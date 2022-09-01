@@ -38,10 +38,8 @@ stop_service() {
 start_service() {
   local service=$1
 
-  if service_exists $service; then
-    sudo -S systemctl start $service.service
-    echo "-- Executed sudo -S systemctl start $service.service --"
-  fi
+  sudo -S systemctl start $service.service
+  echo "-- Executed sudo -S systemctl start $service.service --"
 }
 
 daemon_reload() {

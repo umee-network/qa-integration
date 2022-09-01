@@ -88,6 +88,6 @@ else
 fi
 
 # TODO: check how to do that without systemctl
-if [ -x "$(command -v systemctl)" ]; then
+if command_exists systemctl ; then
   sudo systemctl start mongod
 fi

@@ -15,13 +15,13 @@ echo "INFO: Number of validator nodes to be resumed: $NUM_VALS"
 echo "---------- Restarting systemd service files --------"
 for (( a=1; a<=$NUM_VALS; a++ ))
 do
-    if [ -x "$(command -v systemctl)" ]; then
-        sudo -S systemctl restart $DAEMON-${a}.service
-        echo "-- Resumed $DAEMON-${a}.service --"
-        continue
-    fi
+    # if [ -x "$(command -v systemctl)" ]; then
+    #     sudo -S systemctl restart $DAEMON-${a}.service
+    #     echo "-- Resumed $DAEMON-${a}.service --"
+    #     continue
+    # fi
 
-    pid_path=$DAEMON_HOME-$a/pid
+    pid_path=$DAEMON_HOME-$a/pid.${DAEMON}
     if [ -f "$pid_path" ]; then
         log_path=$DAEMON_HOME-$a/logger.log
         echo "INFO: Starting $DAEMON-$a at $DAEMON_HOME-$a home"
