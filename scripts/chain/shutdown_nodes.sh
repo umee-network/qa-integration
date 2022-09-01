@@ -11,6 +11,10 @@ cd $CURPATH
 # check environment variables are set
 . ../deps/env-check.sh
 
+# load services/pid funcs
+. $CURPATH/helpers/services.sh
+. $CURPATH/helpers/pid_control.sh
+
 FILES_EXISTS="true"
 
 # checking simd-* service files exist or not
@@ -24,23 +28,17 @@ done
 
 if [ $FILES_EXISTS == "true" ]; then
     echo "INFO: Number of validator nodes to be shutdown and disabled: $NUM_VALS"
-    echo "---------- Stopping systemd service files --------"
+    echo "---------- Stopping $DAEMON-${a} --------"
     for (( a=1; a<=$NUM_VALS; a++ ))
     do
-        if [ -x "$(command -v systemctl)" ]; then
-            sudo -S systemctl stop $DAEMON-${a}.service
-            echo "-- Stopped $DAEMON-${a}.service -"
-            sudo -S systemctl stop $DAEMON-${a}-pf.service
-            echo "-- Stopped $DAEMON-${a}-pf.service --"
+        if command_exists systemctl ; then
+            stop_service $DAEMON-${a}.service
+            stop_service $DAEMON-${a}-pf.service
             continue
         fi
 
-        pid_path=$DAEMON_HOME-$a/pid
-        if [ -f "$pid_path" ]; then
-            pid_value=$(cat $pid_path)
-            kill -s 15 $pid_value
-            echo "-- Stopped $DAEMON-${a} by killing PID: $pid_value --"
-        fi
+        kill_process $DAEMON_HOME-${a}/pid
+        kill_process $DAEMON_HOME-${a}-pf/pid
     done
 
     echo "------- Running unsafe reset all ---------"
@@ -51,14 +49,12 @@ if [ $FILES_EXISTS == "true" ]; then
         echo "-- Executed $DAEMON unsafe-reset-all  --home $DAEMON_HOME-$a --"
     done
 
-    if [ -x "$(command -v systemctl)" ]; then
+    if command_exists systemctl ; then
         echo "---------- Disabling systemd process files --------"
         for (( a=1; a<=$NUM_VALS; a++ ))
         do
-            sudo -S systemctl disable $DAEMON-${a}.service
-            echo "-- Executed sudo -S systemctl disable $DAEMON-${a}.service --"
-            sudo -S systemctl disable $DAEMON-${a}-pf.service
-            echo "-- Executed sudo -S systemctl disable $DAEMON-${a}-pf.service --"
+            disable_service $DAEMON-${a}.service
+            disable_service $DAEMON-${a}-pf.service
         done
     fi
 else

@@ -18,6 +18,9 @@ cd $CURPATH
 # check environment variables are set
 . ../deps/env-check.sh
 
+# load services/pid funcs
+. $CURPATH/helpers/daemons.sh
+
 # NUM_ACCOUNTS represents number of accounts to initialize while bootstropping the chain.
 # These are the additional accounts along with the validator accounts.
 NUM_ACCOUNTS=$1
@@ -50,6 +53,11 @@ then
     git fetch --all && git checkout $CHAIN_VERSION
     echo PWD: $(pwd)
     make build && make install
+
+    echo "Installing price-feeder binary"
+    cd ./price-feeder/
+    make build && make install
+    cd $CURPATH
 fi
 
 cd $HOME
@@ -66,6 +74,7 @@ for (( a=1; a<=$NUM_VALS; a++ ))
 do
     rm -rf $DAEMON_HOME-$a
 done
+
 echo "INFO: Setting up validator home directories"
 for (( a=1; a<=$NUM_VALS; a++ ))
 do
@@ -74,12 +83,14 @@ do
     mkdir -p "$DAEMON_HOME-$a"/cosmovisor/genesis/bin
     cp $(which $DAEMON) "$DAEMON_HOME-$a"/cosmovisor/genesis/bin/
 done
+
 echo "INFO: Initializing the chain ($CHAINID)"
 for (( a=1; a<=$NUM_VALS; a++ ))
 do
     echo "INFO: Initializing validator-${a} configuration files"
     $DAEMON init --chain-id $CHAINID validator-${a} --home $DAEMON_HOME-${a}
 done
+
 echo "---------Creating $NUM_VALS keys-------------"
 for (( a=1; a<=$NUM_VALS; a++ ))
 do
@@ -111,6 +122,7 @@ do
     $DAEMON --home $DAEMON_HOME-$a add-genesis-account validator$a 1000000000000$DENOM  --keyring-backend test
     $DAEMON --home $DAEMON_HOME-1 add-genesis-account $($DAEMON keys show validator$a -a --home $DAEMON_HOME-$a --keyring-backend test) 1000000000000$DENOM
 done
+
 echo "INFO: Adding additional accounts to genesis"
 if [ -z $NUM_ACCOUNTS ]
 then
@@ -126,18 +138,17 @@ eth_address=("0x0Ca2adaC7e34EF5db8234bE1182070CD980273E8" "0x17B9E914a10f0b1Cf46
 echo "INFO: Generating gentxs for validator accounts"
 for (( a=1; a<=$NUM_VALS; a++ ))
 do
-
     eth_addr=${eth_address[($a - 1)]}
     val_addr=$($DAEMON keys show validator$a -a --home $DAEMON_HOME-$a --keyring-backend test)
     $DAEMON gentx-gravity validator$a 2000000$DENOM $eth_addr $val_addr --chain-id $CHAINID --keyring-backend test --home $DAEMON_HOME-$a
 done
-
 
 echo "INFO: Copying all gentxs to $DAEMON_HOME-1"
 for (( a=2; a<=$NUM_VALS; a++ ))
 do
     cp $DAEMON_HOME-$a/config/gentx/*.json $DAEMON_HOME-1/config/gentx/
 done
+
 echo "INFO: Collecting gentxs"
 $DAEMON collect-gentxs --home $DAEMON_HOME-1
 echo "INFO: Updating genesis values"
@@ -182,6 +193,7 @@ do
     fi
     PERSISTENT_PEERS="${PERSISTENT_PEERS},${PR}"
 done
+
 # updating config.toml
 for (( a=1; a<=$NUM_VALS; a++ ))
 do
@@ -204,63 +216,12 @@ do
     sed -i '/skip_timeout_commit = false/c\skip_timeout_commit = true' $DAEMON_HOME-$a/config/config.toml
     sed -i '/minimum-gas-prices = ""/c\minimum-gas-prices = "0uumee"' $DAEMON_HOME-$a/config/app.toml
 done
+
 # create systemd service files
 for (( a=1; a<=$NUM_VALS; a++ ))
 do
-    if [ -x "$(command -v systemctl)" ]; then
-        DIFF=$(($a - 1))
-        INC=$(($DIFF * 2))
-        RPC=$((16657 + $INC))
-        echo "INFO: Creating $DAEMON-$a systemd service file"
-        echo "[Unit]
-        Description=${DAEMON} daemon
-        After=network.target
-        [Service]
-        Environment="DAEMON_HOME=$DAEMON_HOME-$a"
-        Environment="DAEMON_NAME=$DAEMON"
-        Environment="DAEMON_ALLOW_DOWNLOAD_BINARIES=false"
-        Environment="DAEMON_RESTART_AFTER_UPGRADE=true"
-        Environment="UNSAFE_SKIP_BACKUP=false"
-        Type=simple
-        User=$USER
-        ExecStart=$(which cosmovisor) start --home $DAEMON_HOME-$a
-        Restart=on-failure
-        RestartSec=3
-        LimitNOFILE=4096
-        [Install]
-        WantedBy=multi-user.target" | sudo tee "/lib/systemd/system/$DAEMON-${a}.service"
-        echo "INFO: Starting $DAEMON-${a} service"
-        sudo -S systemctl daemon-reload
-        sudo -S systemctl start $DAEMON-${a}.service
-        sleep 3s
-        echo "INFO: Checking $DAEMON_HOME-${a} chain status"
-        $DAEMON status --node tcp://localhost:${RPC}
-        continue
-    fi
-
-    log_path=$DAEMON_HOME-$a/logger.log
-    pid_path=$DAEMON_HOME-$a/pid
-    echo "INFO: Starting $DAEMON-$a at $DAEMON_HOME-$a home"
-    DAEMON_HOME=$DAEMON_HOME-$a DAEMON_NAME=$DAEMON DAEMON_ALLOW_DOWNLOAD_BINARIES=false \
-     DAEMON_RESTART_AFTER_UPGRADE=true UNSAFE_SKIP_BACKUP=false \
-     cosmovisor start --home $DAEMON_HOME-$a --log_level $LOG_LEVEL > $log_path 2>&1 &
-
-    echo $! > $pid_path
-    pid_value=$(cat $pid_path)
-
-    echo "--- Starting node..."
-    echo
-    echo "Logs:"
-    echo "  * tail -f $log_path"
-    echo
-    echo "Pid:"
-    echo "  * cat $pid_path = $pid_value"
+    start_umeed $a
 done
-
-echo "Installing price-feeder binary"
-cd $REPO/price-feeder/
-make install
-cd $CURPATH
 
 for (( a=1; a<=$NUM_VALS; a++ ))
 do
