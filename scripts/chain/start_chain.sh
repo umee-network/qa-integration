@@ -28,8 +28,10 @@ echo "INFO: Setting up $NUM_VALS validator nodes and $NUM_ACCOUNTS accounts"
 cd $HOME
 mkdir -p "$GOBIN"
 echo "INFO: Installing cosmovisor"
-go install github.com/cosmos/cosmos-sdk/cosmovisor/cmd/cosmovisor@v1.0.0
-strings $(which cosmovisor) | egrep -e "mod\s+github.com/cosmos/cosmos-sdk/cosmovisor"
+# XXX || : essentially returns true, so that the script doesn't exit if the command fails
+# - eg. "set -e" doesn't apply here, for macosx whereby "compile" doesn't exist
+go install github.com/cosmos/cosmos-sdk/cosmovisor/cmd/cosmovisor@v1.0.0 || :
+strings $(which cosmovisor) | egrep -e "mod\s+github.com/cosmos/cosmos-sdk/cosmovisor" || :
 export REPO=$(basename $GH_URL .git)
 
 DAEMON_EXISTS=""
