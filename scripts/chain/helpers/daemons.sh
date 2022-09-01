@@ -16,17 +16,18 @@ CURPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 start_umeed() {
   VAL_NUM=$1
 
-  echo "VAL_NUM $VAL_NUM"
-  DIFF=$(($VAL_NUM - 1))
-  INC=$(($DIFF * 2))
-  RPC=$((16657 + $INC))
 
   # if command_exists systemctl ; then
   #   start_umeed_systemctl $VAL_NUM
   # else
     start_umeed_pid $VAL_NUM
   # fi
+  echo "waiting for umeed start"
   sleep 3s
+
+  DIFF=$(($VAL_NUM - 1))
+  INC=$(($DIFF * 2))
+  RPC=$((16657 + $INC))
 
   echo "INFO: Checking $DAEMON_HOME-${VAL_NUM} chain status"
   echo "Executing: $DAEMON status --node tcp://localhost:${RPC}"
@@ -103,10 +104,11 @@ start_price_feeder_pid() {
   pid_path=$DAEMON_HOME-$VAL_NUM/pid.pf
 
   PF_CONFIG="${DAEMON_HOME}-${VAL_NUM}/config/price-feeder.toml"
+  PF_DAEMON=$(which price-feeder)
 
   echo "INFO: Starting $DAEMON-$VAL_NUM at $DAEMON_HOME-$VAL_NUM home"
-  PRICE_FEEDER_PASS=test \
-    $(which price-feeder) ${PF_CONFIG} --log-level $LOG_LEVEL > $log_path 2>&1 &
+  echo "Executed: PRICE_FEEDER_PASS=test $PF_DAEMON ${PF_CONFIG} --log-level $LOG_LEVEL > $log_path 2>&1 &"
+  PRICE_FEEDER_PASS=test $PF_DAEMON ${PF_CONFIG} --log-level $LOG_LEVEL >& $log_path  &
 
   echo $! > $pid_path
   pid_value=$(cat $pid_path)

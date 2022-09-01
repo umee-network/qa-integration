@@ -50,7 +50,7 @@ then
         git clone $GH_URL
     fi
     cd $REPO
-    git fetch --all && git checkout $CHAIN_VERSION && git pull origin $CHAIN_VERSION
+    git fetch --all && git checkout $CHAIN_VERSION
     echo PWD: $(pwd)
     make build && make install
 
@@ -215,12 +215,18 @@ do
     sed -i '/max_num_outbound_peers =/c\max_num_outbound_peers = 110' $DAEMON_HOME-$a/config/config.toml
     sed -i '/skip_timeout_commit = false/c\skip_timeout_commit = true' $DAEMON_HOME-$a/config/config.toml
     sed -i '/minimum-gas-prices = ""/c\minimum-gas-prices = "0uumee"' $DAEMON_HOME-$a/config/app.toml
+
+    price_feeder_set_config $a
 done
 
 # create systemd service files
 for (( a=1; a<=$NUM_VALS; a++ ))
 do
     start_umeed $a
-    price_feeder_set_config $a
+done
+
+echo "After $DAEMON started, we can start price-feeder"
+for (( a=1; a<=$NUM_VALS; a++ ))
+do
     start_price_feeder $a
 done
