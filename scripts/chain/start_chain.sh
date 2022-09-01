@@ -18,7 +18,7 @@ cd $CURPATH
 # check environment variables are set
 . ../deps/env-check.sh
 
-# load services/pid funcs
+# load daemons funcs
 . $CURPATH/helpers/daemons.sh
 
 # NUM_ACCOUNTS represents number of accounts to initialize while bootstropping the chain.
@@ -50,7 +50,7 @@ then
         git clone $GH_URL
     fi
     cd $REPO
-    git fetch --all && git checkout $CHAIN_VERSION
+    git fetch --all && git checkout $CHAIN_VERSION && git pull origin $CHAIN_VERSION
     echo PWD: $(pwd)
     make build && make install
 
