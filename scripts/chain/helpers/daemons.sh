@@ -36,7 +36,6 @@ start_umeed() {
 start_price_feeder() {
   VAL_NUM=$1
 
-  # price_feeder_set_config $VAL_NUM
   # if command_exists systemctl ; then
     # start_price_feeder_systemctl $VAL_NUM
   # else
