@@ -16,11 +16,11 @@ CURPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 start_umeed() {
   VAL_NUM=$1
 
-  # if command_exists systemctl ; then
-  #   start_umeed_systemctl $VAL_NUM
-  # else
+  if command_exists systemctl ; then
+    start_umeed_systemctl $VAL_NUM
+  else
     start_umeed_pid $VAL_NUM
-  # fi
+  fi
   echo "waiting for umeed start"
   sleep 3s
 
@@ -36,11 +36,11 @@ start_umeed() {
 start_price_feeder() {
   VAL_NUM=$1
 
-  # if command_exists systemctl ; then
-    # start_price_feeder_systemctl $VAL_NUM
-  # else
+  if command_exists systemctl ; then
+    start_price_feeder_systemctl $VAL_NUM
+  else
     start_price_feeder_pid $VAL_NUM
-  # fi
+  fi
 }
 
 start_umeed_systemctl() {
