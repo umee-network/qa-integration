@@ -35,6 +35,13 @@ stop_service() {
   fi
 }
 
+restart_service() {
+  local service=$1
+
+  sudo -S systemctl restart $service.service
+  echo "-- Executed sudo -S systemctl restart $service.service --"
+}
+
 start_service() {
   local service=$1
 

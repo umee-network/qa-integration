@@ -11,19 +11,20 @@ cd $CURPATH
 # check environment variables are set
 . ../deps/env-check.sh
 
+# load services/pid funcs
+. $CURPATH/helpers/services.sh
+. $CURPATH/helpers/pid_control.sh
+
 echo "INFO: Number of validator nodes to be paused: $NUM_VALS"
 echo "---------- Stopping systemd service files --------"
 for (( a=1; a<=$NUM_VALS; a++ ))
 do
-    # if [ -x "$(command -v systemctl)" ]; then
-    #     sudo -S systemctl stop $DAEMON-${a}.service
-    #     echo "-- Stopped $DAEMON-${a}.service --"
-    #     continue
-    # fi
-    pid_path=$DAEMON_HOME-$a/pid.${DAEMON}
-    if [ -f "$pid_path" ]; then
-        pid_value=$(cat $pid_path)
-        kill -s 15 $pid_value
-        echo "-- Stopped $DAEMON-${a} by killing PID: $pid_value --"
+    if command_exists systemctl ; then
+        stop_service $DAEMON-${a}.service
+        stop_service $DAEMON-${a}-pf.service
+        continue
     fi
+
+    kill_process $DAEMON_HOME-${a}/pid.${DAEMON}
+    kill_process $DAEMON_HOME-${a}/pid.pf
 done
