@@ -18,7 +18,10 @@ kill_process() {
 
   if file_exists $pid_file; then
     pid_value=$(cat $pid_file)
-    kill -s 15 $pid_value
-    echo "-- Stopped $pid_file by killing PID: $pid_value --"
+
+    if ps --pid $pid_value &>/dev/null; then
+      kill -s 15 $pid_value
+      echo "-- Stopped $pid_file by killing PID: $pid_value --"
+    fi
   fi
 }
