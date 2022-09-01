@@ -15,6 +15,16 @@ echo "INFO: Number of validator nodes to be paused: $NUM_VALS"
 echo "---------- Stopping systemd service files --------"
 for (( a=1; a<=$NUM_VALS; a++ ))
 do
-    sudo -S systemctl stop $DAEMON-${a}.service
-    echo "-- Stopped $DAEMON-${a}.service --"
+    if [ -x "$(command -v systemctl)" ]; then
+        sudo -S systemctl stop $DAEMON-${a}.service
+        echo "-- Stopped $DAEMON-${a}.service --"
+        continue
+    fi
+
+    pid_path=$DAEMON_HOME-$a/pid
+    if [ -f "$pid_path" ]; then
+        pid_value=$(cat $pid_path)
+        kill -s 15 $pid_value
+        echo "-- Stopped $DAEMON-${a} by killing PID: $pid_value --"
+    fi
 done
