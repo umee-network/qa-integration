@@ -70,4 +70,5 @@ else
   sudo apt-get update -y
   sudo apt-get install mongodb-org -y
 fi
+# TODO: check how to do that without systemctl
 sudo systemctl start mongod

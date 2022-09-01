@@ -207,33 +207,54 @@ done
 # create systemd service files
 for (( a=1; a<=$NUM_VALS; a++ ))
 do
-    DIFF=$(($a - 1))
-    INC=$(($DIFF * 2))
-    RPC=$((16657 + $INC))
-    echo "INFO: Creating $DAEMON-$a systemd service file"
-    echo "[Unit]
-    Description=${DAEMON} daemon
-    After=network.target
-    [Service]
-    Environment="DAEMON_HOME=$DAEMON_HOME-$a"
-	Environment="DAEMON_NAME=$DAEMON"
-	Environment="DAEMON_ALLOW_DOWNLOAD_BINARIES=false"
-	Environment="DAEMON_RESTART_AFTER_UPGRADE=true"
-	Environment="UNSAFE_SKIP_BACKUP=false"
-    Type=simple
-    User=$USER
-    ExecStart=$(which cosmovisor) start --home $DAEMON_HOME-$a
-    Restart=on-failure
-    RestartSec=3
-    LimitNOFILE=4096
-    [Install]
-    WantedBy=multi-user.target" | sudo tee "/lib/systemd/system/$DAEMON-${a}.service"
-    echo "INFO: Starting $DAEMON-${a} service"
-    sudo -S systemctl daemon-reload
-    sudo -S systemctl start $DAEMON-${a}.service
-    sleep 3s
-    echo "INFO: Checking $DAEMON_HOME-${a} chain status"
-    $DAEMON status --node tcp://localhost:${RPC}
+    if [ -x "$(command -v systemctl)" ]; then
+        DIFF=$(($a - 1))
+        INC=$(($DIFF * 2))
+        RPC=$((16657 + $INC))
+        echo "INFO: Creating $DAEMON-$a systemd service file"
+        echo "[Unit]
+        Description=${DAEMON} daemon
+        After=network.target
+        [Service]
+        Environment="DAEMON_HOME=$DAEMON_HOME-$a"
+        Environment="DAEMON_NAME=$DAEMON"
+        Environment="DAEMON_ALLOW_DOWNLOAD_BINARIES=false"
+        Environment="DAEMON_RESTART_AFTER_UPGRADE=true"
+        Environment="UNSAFE_SKIP_BACKUP=false"
+        Type=simple
+        User=$USER
+        ExecStart=$(which cosmovisor) start --home $DAEMON_HOME-$a
+        Restart=on-failure
+        RestartSec=3
+        LimitNOFILE=4096
+        [Install]
+        WantedBy=multi-user.target" | sudo tee "/lib/systemd/system/$DAEMON-${a}.service"
+        echo "INFO: Starting $DAEMON-${a} service"
+        sudo -S systemctl daemon-reload
+        sudo -S systemctl start $DAEMON-${a}.service
+        sleep 3s
+        echo "INFO: Checking $DAEMON_HOME-${a} chain status"
+        $DAEMON status --node tcp://localhost:${RPC}
+        continue
+    fi
+
+    log_path=$DAEMON_HOME-$a/logger.log
+    pid_path=$DAEMON_HOME-$a/pid
+    echo "INFO: Starting $DAEMON-$a at $DAEMON_HOME-$a home"
+    DAEMON_HOME=$DAEMON_HOME-$a DAEMON_NAME=$DAEMON DAEMON_ALLOW_DOWNLOAD_BINARIES=false \
+     DAEMON_RESTART_AFTER_UPGRADE=true UNSAFE_SKIP_BACKUP=false \
+     cosmovisor start --home $DAEMON_HOME-$a --log_level $LOG_LEVEL > $log_path 2>&1 &
+
+    echo $! > $pid_path
+    pid_value=$(cat $pid_path)
+
+    echo "--- Starting node..."
+    echo
+    echo "Logs:"
+    echo "  * tail -f $log_path"
+    echo
+    echo "Pid:"
+    echo "  * cat $pid_path = $pid_value"
 done
 
 echo "Installing price-feeder binary"
