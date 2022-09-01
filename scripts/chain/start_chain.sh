@@ -75,6 +75,7 @@ do
     rm -rf $DAEMON_HOME-$a
 done
 
+
 echo "INFO: Setting up validator home directories"
 for (( a=1; a<=$NUM_VALS; a++ ))
 do
@@ -84,12 +85,14 @@ do
     cp $(which $DAEMON) "$DAEMON_HOME-$a"/cosmovisor/genesis/bin/
 done
 
+
 echo "INFO: Initializing the chain ($CHAINID)"
 for (( a=1; a<=$NUM_VALS; a++ ))
 do
     echo "INFO: Initializing validator-${a} configuration files"
     $DAEMON init --chain-id $CHAINID validator-${a} --home $DAEMON_HOME-${a}
 done
+
 
 echo "---------Creating $NUM_VALS keys-------------"
 for (( a=1; a<=$NUM_VALS; a++ ))
@@ -123,6 +126,7 @@ do
     $DAEMON --home $DAEMON_HOME-1 add-genesis-account $($DAEMON keys show validator$a -a --home $DAEMON_HOME-$a --keyring-backend test) 1000000000000$DENOM
 done
 
+
 echo "INFO: Adding additional accounts to genesis"
 if [ -z $NUM_ACCOUNTS ]
 then
@@ -148,6 +152,7 @@ for (( a=2; a<=$NUM_VALS; a++ ))
 do
     cp $DAEMON_HOME-$a/config/gentx/*.json $DAEMON_HOME-1/config/gentx/
 done
+
 
 echo "INFO: Collecting gentxs"
 $DAEMON collect-gentxs --home $DAEMON_HOME-1
