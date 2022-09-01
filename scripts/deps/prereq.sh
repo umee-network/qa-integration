@@ -31,33 +31,6 @@ CURPATH=`dirname $(realpath "$0")`
 cd $CURPATH
 source ../../env-umee
 
-VAR=12
-
-if [[ $VAR -gt 10 ]]
-then
-  echo "The variable is greater than 10."
-else
-  echo "The variable is equal or less than 10."
-fi
-
-# if command_exists go;
-# then
-# # then
-#   echo "Golang is already installed"
-#   # echo "checking go version"
-#   # goversionstr="$(go version)"
-#   # if [[ ! "$goversionstr" == *"$goversion"* ]]
-#   # then
-#   #   echo "$goversionstr is different of $goversion"
-#   #   install_go()
-#   # # else
-#   # #   echo "It is the same version, will not install"
-#   # fi
-# else
-#   install_go()
-# fi
-
-
 if command_exists go;
 then
   echo "Golang is already installed"
