@@ -254,15 +254,15 @@ do
     PF_CONFIG="${CONFIG_DIR}/price-feeder.toml"
     cp ../configs/price-feeder.toml $CONFIG_DIR
 
-    UMEE_E2E_PRICE_FEEDER_VALIDATOR=$(eval "umeed keys show validator${a} --home ${DAEMON_HOME}-${a} --bech val --keyring-backend test --output json | jq .address")
-    UMEE_E2E_PRICE_FEEDER_ADDRESS=$(eval "umeed keys show validator${a} --home ${DAEMON_HOME}-${a} --bech acc --keyring-backend test --output json | jq .address")
-    UMEE_E2E_UMEE_VAL_KEY_DIR="${DAEMON_HOME}-${a}"
-    UMEE_E2E_UMEE_VAL_HOST="tcp://localhost:${RPC}"
+    PRICE_FEEDER_VALIDATOR=$(eval "umeed keys show validator${a} --home ${DAEMON_HOME}-${a} --bech val --keyring-backend test --output json | jq .address")
+    PRICE_FEEDER_ADDRESS=$(eval "umeed keys show validator${a} --home ${DAEMON_HOME}-${a} --bech acc --keyring-backend test --output json | jq .address")
+    UMEE_VAL_KEY_DIR="${DAEMON_HOME}-${a}"
+    UMEE_VAL_HOST="tcp://localhost:${RPC}"
 
     sed -i "s/\$PF_PORT/${PF_PORT}/g" $PF_CONFIG
-    sed -i "s/\"\$UMEE_E2E_PRICE_FEEDER_VALIDATOR\"/${UMEE_E2E_PRICE_FEEDER_VALIDATOR}/g" $PF_CONFIG
-    sed -i "s/\"\$UMEE_E2E_PRICE_FEEDER_ADDRESS\"/${UMEE_E2E_PRICE_FEEDER_ADDRESS}/g" $PF_CONFIG
-    sed -i "s|\"\$UMEE_E2E_UMEE_VAL_KEY_DIR\"|\"${UMEE_E2E_UMEE_VAL_KEY_DIR}\"|g" $PF_CONFIG
+    sed -i "s/\"\$PRICE_FEEDER_VALIDATOR\"/${PRICE_FEEDER_VALIDATOR}/g" $PF_CONFIG
+    sed -i "s/\"\$PRICE_FEEDER_ADDRESS\"/${PRICE_FEEDER_ADDRESS}/g" $PF_CONFIG
+    sed -i "s|\"\$UMEE_VAL_KEY_DIR\"|\"${UMEE_VAL_KEY_DIR}\"|g" $PF_CONFIG
     sed -i "s/\$GRPC/${GRPC}/" $PF_CONFIG
     sed -i "s/\$RPC/${RPC}/" $PF_CONFIG
 

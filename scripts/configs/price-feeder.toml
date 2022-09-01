@@ -30,12 +30,12 @@ providers = [
 ]
 quote = "USD"
 [account]
-address = "$UMEE_E2E_PRICE_FEEDER_ADDRESS"
+address = "$PRICE_FEEDER_ADDRESS"
 chain_id = "test"
-validator = "$UMEE_E2E_PRICE_FEEDER_VALIDATOR"
+validator = "$PRICE_FEEDER_VALIDATOR"
 [keyring]
 backend = "test"
-dir = "$UMEE_E2E_UMEE_VAL_KEY_DIR"
+dir = "$UMEE_VAL_KEY_DIR"
 [rpc]
 grpc_endpoint = "tcp://localhost:$GRPC"
 rpc_timeout = "100ms"
