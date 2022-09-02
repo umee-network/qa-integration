@@ -1,6 +1,6 @@
 {
   "title": "Update the Leverage Token Registry",
-  "description": "Update the uumee token in the leverage registry.",
+  "description": "Update the leverage token registry.",
   "registry": [
     {
       "base_denom": "uumee",

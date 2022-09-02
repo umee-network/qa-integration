@@ -41,10 +41,10 @@ grpc_endpoint = "tcp://localhost:$GRPC"
 rpc_timeout = "100ms"
 tmrpc_endpoint = "http://localhost:$RPC"
 [telemetry]
-service_name = "price-feeder"
+service-name = "price-feeder"
 enabled = true
-enable_hostname = true
-enable_hostname_label = true
-enable_service_label = true
+enable-hostname = true
+enable-hostname_label = true
+enable-service-label = true
 type = "prometheus"
-global_labels = [["chain-id", "test"]]
+global-labels = [["chain-id", "test"]]
