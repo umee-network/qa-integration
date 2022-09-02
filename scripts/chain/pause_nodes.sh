@@ -5,16 +5,26 @@
 set -e
 
 # get absolute parent directory path of current file
-CURPATH=`dirname $(realpath "$0")`
+CURPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 cd $CURPATH
 
 # check environment variables are set
 . ../deps/env-check.sh
 
+# load services/pid funcs
+. $CURPATH/helpers/services.sh
+. $CURPATH/helpers/pid_control.sh
+
 echo "INFO: Number of validator nodes to be paused: $NUM_VALS"
 echo "---------- Stopping systemd service files --------"
 for (( a=1; a<=$NUM_VALS; a++ ))
 do
-    sudo -S systemctl stop $DAEMON-${a}.service
-    echo "-- Stopped $DAEMON-${a}.service --"
+    if command_exists systemctl ; then
+        stop_service $DAEMON-${a}.service
+        stop_service $DAEMON-${a}-pf.service
+        continue
+    fi
+
+    kill_process $DAEMON_HOME-${a}/pid.${DAEMON}
+    kill_process $DAEMON_HOME-${a}/pid.pf
 done

@@ -12,11 +12,14 @@ EVIDENCE_AGE="60000000000"
 set -e
 
 # get absolute parent directory path of current file
-CURPATH=`dirname $(realpath "$0")`
+CURPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 cd $CURPATH
 
 # check environment variables are set
 . ../deps/env-check.sh
+
+# load daemons funcs
+. $CURPATH/helpers/daemons.sh
 
 # NUM_ACCOUNTS represents number of accounts to initialize while bootstropping the chain.
 # These are the additional accounts along with the validator accounts.
@@ -25,8 +28,10 @@ echo "INFO: Setting up $NUM_VALS validator nodes and $NUM_ACCOUNTS accounts"
 cd $HOME
 mkdir -p "$GOBIN"
 echo "INFO: Installing cosmovisor"
-go install github.com/cosmos/cosmos-sdk/cosmovisor/cmd/cosmovisor@v1.0.0
-strings $(which cosmovisor) | egrep -e "mod\s+github.com/cosmos/cosmos-sdk/cosmovisor"
+# XXX || : essentially returns true, so that the script doesn't exit if the command fails
+# - eg. "set -e" doesn't apply here, for macosx whereby "compile" doesn't exist
+go install github.com/cosmos/cosmos-sdk/cosmovisor/cmd/cosmovisor@v1.0.0 || :
+strings $(which cosmovisor) | egrep -e "mod\s+github.com/cosmos/cosmos-sdk/cosmovisor" || :
 export REPO=$(basename $GH_URL .git)
 
 DAEMON_EXISTS=""
@@ -50,6 +55,11 @@ then
     git fetch --all && git checkout $CHAIN_VERSION
     echo PWD: $(pwd)
     make build && make install
+
+    echo "Installing price-feeder binary"
+    cd ./price-feeder/
+    make build && make install
+    cd $CURPATH
 fi
 
 cd $HOME
@@ -66,6 +76,8 @@ for (( a=1; a<=$NUM_VALS; a++ ))
 do
     rm -rf $DAEMON_HOME-$a
 done
+
+
 echo "INFO: Setting up validator home directories"
 for (( a=1; a<=$NUM_VALS; a++ ))
 do
@@ -74,12 +86,16 @@ do
     mkdir -p "$DAEMON_HOME-$a"/cosmovisor/genesis/bin
     cp $(which $DAEMON) "$DAEMON_HOME-$a"/cosmovisor/genesis/bin/
 done
+
+
 echo "INFO: Initializing the chain ($CHAINID)"
 for (( a=1; a<=$NUM_VALS; a++ ))
 do
     echo "INFO: Initializing validator-${a} configuration files"
     $DAEMON init --chain-id $CHAINID validator-${a} --home $DAEMON_HOME-${a}
 done
+
+
 echo "---------Creating $NUM_VALS keys-------------"
 for (( a=1; a<=$NUM_VALS; a++ ))
 do
@@ -111,6 +127,8 @@ do
     $DAEMON --home $DAEMON_HOME-$a add-genesis-account validator$a 1000000000000$DENOM  --keyring-backend test
     $DAEMON --home $DAEMON_HOME-1 add-genesis-account $($DAEMON keys show validator$a -a --home $DAEMON_HOME-$a --keyring-backend test) 1000000000000$DENOM
 done
+
+
 echo "INFO: Adding additional accounts to genesis"
 if [ -z $NUM_ACCOUNTS ]
 then
@@ -126,18 +144,18 @@ eth_address=("0x0Ca2adaC7e34EF5db8234bE1182070CD980273E8" "0x17B9E914a10f0b1Cf46
 echo "INFO: Generating gentxs for validator accounts"
 for (( a=1; a<=$NUM_VALS; a++ ))
 do
-
     eth_addr=${eth_address[($a - 1)]}
     val_addr=$($DAEMON keys show validator$a -a --home $DAEMON_HOME-$a --keyring-backend test)
     $DAEMON gentx-gravity validator$a 2000000$DENOM $eth_addr $val_addr --chain-id $CHAINID --keyring-backend test --home $DAEMON_HOME-$a
 done
-
 
 echo "INFO: Copying all gentxs to $DAEMON_HOME-1"
 for (( a=2; a<=$NUM_VALS; a++ ))
 do
     cp $DAEMON_HOME-$a/config/gentx/*.json $DAEMON_HOME-1/config/gentx/
 done
+
+
 echo "INFO: Collecting gentxs"
 $DAEMON collect-gentxs --home $DAEMON_HOME-1
 echo "INFO: Updating genesis values"
@@ -148,11 +166,11 @@ jq '.app_state["gravity"]["params"]["bridge_ethereum_address"]="0x93b5122922F9dC
     | .app_state["gravity"]["gravity_nonces"]["latest_valset_nonce"]="0"
     | .app_state["gravity"]["gravity_nonces"]["last_observed_nonce"]="0"' \
     $DAEMON_HOME-1/config/genesis.json > $DAEMON_HOME-1/config/tmp_genesis.json && mv $DAEMON_HOME-1/config/tmp_genesis.json $DAEMON_HOME-1/config/genesis.json
-sed -i "s/172800000000000/${EVIDENCE_AGE}/g" $DAEMON_HOME-1/config/genesis.json
-sed -i "s/172800s/${GOV_DEFAULT_PERIOD}/g" $DAEMON_HOME-1/config/genesis.json
-sed -i "s/stake/$DENOM/g" $DAEMON_HOME-1/config/genesis.json
-sed -i 's/"downtime_jail_duration": "600s"/"downtime_jail_duration": "'${DOWNTIME_JAIL_DURATION}'"/' $DAEMON_HOME-1/config/genesis.json
-sed -i 's/"unbonding_time": "1814400s"/"unbonding_time": "'${UNBONDING_PERIOD}'"/' $DAEMON_HOME-1/config/genesis.json
+sed -i -e "s/172800000000000/${EVIDENCE_AGE}/g" $DAEMON_HOME-1/config/genesis.json
+sed -i -e "s/172800s/${GOV_DEFAULT_PERIOD}/g" $DAEMON_HOME-1/config/genesis.json
+sed -i -e "s/stake/$DENOM/g" $DAEMON_HOME-1/config/genesis.json
+sed -i -e 's/"downtime_jail_duration": "600s"/"downtime_jail_duration": "'${DOWNTIME_JAIL_DURATION}'"/' $DAEMON_HOME-1/config/genesis.json
+sed -i -e 's/"unbonding_time": "1814400s"/"unbonding_time": "'${UNBONDING_PERIOD}'"/' $DAEMON_HOME-1/config/genesis.json
 echo "INFO: Distribute genesis.json of validator-1 to remaining nodes"
 for (( a=2; a<=$NUM_VALS; a++ ))
 do
@@ -182,6 +200,7 @@ do
     fi
     PERSISTENT_PEERS="${PERSISTENT_PEERS},${PR}"
 done
+
 # updating config.toml
 for (( a=1; a<=$NUM_VALS; a++ ))
 do
@@ -192,96 +211,29 @@ do
     GRPC=$((9092 + $INC)) #increment grpc poprt
     WGRPC=$((9093 + $INC)) #increment web grpc port
     echo "INFO: Updating validator-$a chain config"
-    sed -i 's#tcp://127.0.0.1:26657#tcp://0.0.0.0:'${RPC}'#g' $DAEMON_HOME-$a/config/config.toml
-    sed -i 's#tcp://0.0.0.0:26656#tcp://0.0.0.0:'${LADDR}'#g' $DAEMON_HOME-$a/config/config.toml
-    sed -i '/persistent_peers =/c\persistent_peers = "'"$PERSISTENT_PEERS"'"' $DAEMON_HOME-$a/config/config.toml
-    sed -i '/allow_duplicate_ip =/c\allow_duplicate_ip = true' $DAEMON_HOME-$a/config/config.toml
-    sed -i '/pprof_laddr =/c\# pprof_laddr = "localhost:6060"' $DAEMON_HOME-$a/config/config.toml
-    sed -i 's#0.0.0.0:9090#0.0.0.0:'${GRPC}'#g' $DAEMON_HOME-$a/config/app.toml
-    sed -i 's#0.0.0.0:9091#0.0.0.0:'${WGRPC}'#g' $DAEMON_HOME-$a/config/app.toml
-    sed -i '/max_num_inbound_peers =/c\max_num_inbound_peers = 140' $DAEMON_HOME-$a/config/config.toml
-    sed -i '/max_num_outbound_peers =/c\max_num_outbound_peers = 110' $DAEMON_HOME-$a/config/config.toml
-    sed -i '/skip_timeout_commit = false/c\skip_timeout_commit = true' $DAEMON_HOME-$a/config/config.toml
-    sed -i '/minimum-gas-prices = ""/c\minimum-gas-prices = "0uumee"' $DAEMON_HOME-$a/config/app.toml
+    sed -i -e 's#tcp://127.0.0.1:26657#tcp://0.0.0.0:'${RPC}'#g' $DAEMON_HOME-$a/config/config.toml
+    sed -i -e 's#tcp://0.0.0.0:26656#tcp://0.0.0.0:'${LADDR}'#g' $DAEMON_HOME-$a/config/config.toml
+    sed -i -e 's#persistent_peers =.*$#persistent_peers = "'$PERSISTENT_PEERS'"#' $DAEMON_HOME-$a/config/config.toml
+    sed -i -e 's#allow_duplicate_ip =.*$#allow_duplicate_ip = true#' $DAEMON_HOME-$a/config/config.toml
+    sed -i -e 's#pprof_laddr =.*$#pprof_laddr = "localhost:6060"#' $DAEMON_HOME-$a/config/config.toml
+    sed -i -e 's#0.0.0.0:9090#0.0.0.0:'${GRPC}'#g' $DAEMON_HOME-$a/config/app.toml
+    sed -i -e 's#0.0.0.0:9091#0.0.0.0:'${WGRPC}'#g' $DAEMON_HOME-$a/config/app.toml
+    sed -i -e 's#max_num_inbound_peers =.*$#max_num_inbound_peers = 140#' $DAEMON_HOME-$a/config/config.toml
+    sed -i -e 's#max_num_outbound_peers =.*$#max_num_outbound_peers = 110#' $DAEMON_HOME-$a/config/config.toml
+    sed -i -e 's#skip_timeout_commit = false#skip_timeout_commit = true#' $DAEMON_HOME-$a/config/config.toml
+    sed -i -e 's#minimum-gas-prices = ""#minimum-gas-prices = "0uumee"#' $DAEMON_HOME-$a/config/app.toml
+
+    price_feeder_set_config $a
 done
+
 # create systemd service files
 for (( a=1; a<=$NUM_VALS; a++ ))
 do
-    DIFF=$(($a - 1))
-    INC=$(($DIFF * 2))
-    RPC=$((16657 + $INC))
-    echo "INFO: Creating $DAEMON-$a systemd service file"
-    echo "[Unit]
-    Description=${DAEMON} daemon
-    After=network.target
-    [Service]
-    Environment="DAEMON_HOME=$DAEMON_HOME-$a"
-	Environment="DAEMON_NAME=$DAEMON"
-	Environment="DAEMON_ALLOW_DOWNLOAD_BINARIES=false"
-	Environment="DAEMON_RESTART_AFTER_UPGRADE=true"
-	Environment="UNSAFE_SKIP_BACKUP=false"
-    Type=simple
-    User=$USER
-    ExecStart=$(which cosmovisor) start --home $DAEMON_HOME-$a
-    Restart=on-failure
-    RestartSec=3
-    LimitNOFILE=4096
-    [Install]
-    WantedBy=multi-user.target" | sudo tee "/lib/systemd/system/$DAEMON-${a}.service"
-    echo "INFO: Starting $DAEMON-${a} service"
-    sudo -S systemctl daemon-reload
-    sudo -S systemctl start $DAEMON-${a}.service
-    sleep 3s
-    echo "INFO: Checking $DAEMON_HOME-${a} chain status"
-    $DAEMON status --node tcp://localhost:${RPC}
+    start_umeed $a
 done
 
-echo "Installing price-feeder binary"
-cd $REPO/price-feeder/
-make install
-cd $CURPATH
-
+echo "After $DAEMON started, we can start price-feeder"
 for (( a=1; a<=$NUM_VALS; a++ ))
 do
-    DIFF=$(($a - 1))
-    INC=$(($DIFF * 2))
-    RPC=$((16657 + $INC))
-    GRPC=$((9092 + $INC))
-    PF_PORT=$((7171 + $INC))
-
-    # Copy the price-feeder config template and replace variables
-    CONFIG_DIR="${DAEMON_HOME}-${a}/config"
-    PF_CONFIG="${CONFIG_DIR}/price-feeder.toml"
-    cp ../configs/price-feeder.toml $CONFIG_DIR
-
-    PRICE_FEEDER_VALIDATOR=$(eval "umeed keys show validator${a} --home ${DAEMON_HOME}-${a} --bech val --keyring-backend test --output json | jq .address")
-    PRICE_FEEDER_ADDRESS=$(eval "umeed keys show validator${a} --home ${DAEMON_HOME}-${a} --bech acc --keyring-backend test --output json | jq .address")
-    UMEE_VAL_KEY_DIR="${DAEMON_HOME}-${a}"
-    UMEE_VAL_HOST="tcp://localhost:${RPC}"
-
-    sed -i "s/\$PF_PORT/${PF_PORT}/g" $PF_CONFIG
-    sed -i "s/\"\$PRICE_FEEDER_VALIDATOR\"/${PRICE_FEEDER_VALIDATOR}/g" $PF_CONFIG
-    sed -i "s/\"\$PRICE_FEEDER_ADDRESS\"/${PRICE_FEEDER_ADDRESS}/g" $PF_CONFIG
-    sed -i "s|\"\$UMEE_VAL_KEY_DIR\"|\"${UMEE_VAL_KEY_DIR}\"|g" $PF_CONFIG
-    sed -i "s/\$GRPC/${GRPC}/" $PF_CONFIG
-    sed -i "s/\$RPC/${RPC}/" $PF_CONFIG
-
-    # Create systemd service files
-    echo "INFO: Creating price-feeder $DAEMON-$a-pf systemd service file"
-    echo "[Unit]
-    Description=${DAEMON}-price-feeder daemon
-    After=network.target
-    [Service]
-    Environment="PRICE_FEEDER_PASS=test"
-    Type=simple
-    User=$USER
-    ExecStart=$(which price-feeder) ${PF_CONFIG}
-    Restart=on-failure
-    RestartSec=3
-    LimitNOFILE=4096
-    [Install]
-    WantedBy=multi-user.target" | sudo tee "/lib/systemd/system/$DAEMON-${a}-pf.service"
-    echo "INFO: Starting $DAEMON-${a}-pf service"
-    sudo -S systemctl daemon-reload
-    sudo -S systemctl start $DAEMON-${a}-pf.service
+    start_price_feeder $a
 done
