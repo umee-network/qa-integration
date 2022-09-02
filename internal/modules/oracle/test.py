@@ -1,7 +1,6 @@
 import time
 import logging
 import unittest
-import json
 import inspect
 import pathlib
 from internal.modules.gov.tx import submit_and_pass_proposal
@@ -14,12 +13,14 @@ from utils import env
 from internal.core.keys import keys_show
 
 from modules.oracle.query import (
+    query_feeder_delegation,
     query_params,
 )
 
 from modules.oracle.tx import (
     tx_submit_prevote,
     tx_submit_vote,
+    tx_delegate_feed_consent,
 )
 
 from modules.oracle.hash import (
@@ -46,9 +47,9 @@ validator1_home = f"{env.DAEMON_HOME}-1"
 validator2_home = f"{env.DAEMON_HOME}-2"
 validator3_home = f"{env.DAEMON_HOME}-3"
 
-validator1_acc = keys_show("validator1", "val")[1]
-validator2_acc = keys_show("validator2", "val", validator2_home)[1]
-validator3_acc = keys_show("validator3", "val", validator3_home)[1]
+validator1_val = keys_show("validator1", "val")[1]
+validator2_val = keys_show("validator2", "val", validator2_home)[1]
+validator3_val = keys_show("validator3", "val", validator3_home)[1]
 
 def get_block_height():
     _, message = node_status()
@@ -78,28 +79,28 @@ class TestOracleModule(unittest.TestCase):
     # test_prevotes tests to make sure that we can submit prevotes
     def test_prevotes(self):
         # Get Hash
-        vote_hash_1 = get_hash(EXCHANGE_RATES.ToString(), STATIC_SALT, validator1_acc["address"])
-        vote_hash_2 = get_hash(EXCHANGE_RATES.ToString(), STATIC_SALT, validator2_acc["address"])
+        vote_hash_1 = get_hash(EXCHANGE_RATES.ToString(), STATIC_SALT, validator1_val["address"])
+        vote_hash_2 = get_hash(EXCHANGE_RATES.ToString(), STATIC_SALT, validator2_val["address"])
 
         wait_for_next_voting_period()
 
         # Submit 1st prevote
-        status = tx_submit_prevote(validator1_acc["name"], vote_hash_1, validator1_home)
+        status, prevote_1 = tx_submit_prevote(validator1_val["name"], vote_hash_1, validator1_home)
         self.assertTrue(status)
 
         # Query to verify 1st prevote exists
-        status, prevote_1 = query_aggregate_prevote(validator1_acc["address"])
+        status, prevote_1 = query_aggregate_prevote(validator1_val["address"])
         self.assertTrue(status)
         self.assertEqual(prevote_1["aggregate_prevote"]["hash"].upper(), vote_hash_1)
 
         wait_for_next_voting_period()
 
         # # Submit 2nd prevote
-        status = tx_submit_prevote(validator2_acc["name"], vote_hash_2, validator2_home)
+        status, prevote_2 = tx_submit_prevote(validator2_val["name"], vote_hash_2, validator2_home)
         self.assertTrue(status)
 
         # Query to verify 2nd prevote exists
-        status, prevote_2 = query_aggregate_prevote(validator2_acc["address"])
+        status, prevote_2 = query_aggregate_prevote(validator2_val["address"])
         self.assertTrue(status)
         self.assertEqual(prevote_2["aggregate_prevote"]["hash"].upper(), vote_hash_2)
 
@@ -108,29 +109,73 @@ class TestOracleModule(unittest.TestCase):
     # test_votes tests to make sure that we can submit votes
     def test_votes(self):
         # Get Hash
-        vote_hash = get_hash(EXCHANGE_RATES.ToString(), STATIC_SALT, validator3_acc["address"])
+        vote_hash = get_hash(EXCHANGE_RATES.ToString(), STATIC_SALT, validator3_val["address"])
 
         wait_for_next_voting_period()
 
         # Submit prevote
-        status, prevote_1 = tx_submit_prevote(validator3_acc["name"], vote_hash, validator3_home)
+        status, prevote_1 = tx_submit_prevote(validator3_val["name"], vote_hash, validator3_home)
         self.assertTrue(status)
 
-        # Wait until next voting period
-        time.sleep(1.5)
+        time.sleep(1.5) # Wait until next voting period
 
         # Submit vote
-        status, vote_1 = tx_submit_vote(validator3_acc["name"], STATIC_SALT, validator3_home, EXCHANGE_RATES.ToString())
+        status, vote_1 = tx_submit_vote(validator3_val["name"], STATIC_SALT, validator3_home, EXCHANGE_RATES.ToString())
         self.assertTrue(status)
 
         # Query votes to make sure they exist, and are correct
-        status, vote_1 = query_aggregate_vote(validator3_acc["address"])
+        status, vote_1 = query_aggregate_vote(validator3_val["address"])
         self.assertTrue(status)
 
         self.assertEqual(len(vote_1["aggregate_vote"]["exchange_rate_tuples"]), EXCHANGE_RATES.Len())
 
         for rate in vote_1["aggregate_vote"]["exchange_rate_tuples"]:
             self.assertEqual(float(rate["exchange_rate"]), float(EXCHANGE_RATES.GetRate(rate["denom"])))
+
+    # Test delegating feed consent from operator to delegate,
+    # then submit voting from delegate on behalf of operator
+    def test_delegate_feed_consent(self):
+        operator_name = validator1_val["name"]
+        operator_val_address = validator1_val["address"]
+        operator_home = validator1_home
+
+        # Using a non-validator account
+        sender = keys_show("account2")[1]
+        delegate_name = sender["name"]
+        delegate_home = validator1_home
+        delegate_acc_address = sender["address"]
+
+        status, response = tx_delegate_feed_consent(operator_name, delegate_acc_address, operator_home)
+        self.assertTrue(status)
+
+        # Test query route and verify feeder is delegated correctly
+        status, response = query_feeder_delegation(operator_val_address)
+        self.assertTrue(status)
+        self.assertEqual(delegate_acc_address, response["feeder_addr"])
+
+        vote_hash = get_hash(EXCHANGE_RATES.ToString(), STATIC_SALT, operator_val_address)
+
+        wait_for_next_voting_period()
+
+        status = tx_submit_prevote(delegate_name, vote_hash, delegate_home, operator_val_address)
+        self.assertTrue(status)
+
+        status, response = query_aggregate_prevote(operator_val_address)
+        self.assertTrue(status)
+
+        time.sleep(1.5) # Wait until next voting period
+
+        status = tx_submit_vote(
+            delegate_name, 
+            STATIC_SALT, 
+            validator1_home, 
+            EXCHANGE_RATES.ToString(),  
+            operator_val_address
+        )
+        self.assertTrue(status)
+
+        status = query_aggregate_vote(validator1_val["address"])
+        self.assertTrue(status)
 
     # test_hash makes sure our hasher is accurate
     def test_hash(self):

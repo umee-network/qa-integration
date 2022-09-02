@@ -41,6 +41,11 @@ def query_params():
 --chain-id {CHAINID} --output json"""
     return exec_command(command)
 
+def query_feeder_delegation(valAddress):
+    command = f"""{DAEMON} q oracle feeder-delegation {valAddress} --node {RPC} \
+        --chain-id {CHAINID} --output json"""
+    return exec_command(command)
+
 def node_status():
     command = f"{DAEMON} status --node {RPC}"
     return exec_command(command)
