@@ -106,11 +106,15 @@ start_price_feeder_pid() {
   PF_DAEMON=$(which price-feeder)
 
   echo "INFO: Starting $DAEMON-$VAL_NUM at $DAEMON_HOME-$VAL_NUM home"
-  cat $PF_CONFIG
-  echo "PRICE_FEEDER_PASS=test $PF_DAEMON ${PF_CONFIG} --log-level $LOG_LEVEL > $log_path 2>&1 &"
+
   export PRICE_FEEDER_PASS=test
 
-  PRICE_FEEDER_PASS=test $PF_DAEMON ${PF_CONFIG} --log-level $LOG_LEVEL > $log_path 2>&1 &
+  # This works around the parent process RPC env variable set by prereq.sh 
+  # and due to the viper.AutomaticEnv() call in the price-feeder binary
+  # All other top level price-feeder config vars could conflict as well
+  unset RPC
+
+  $PF_DAEMON ${PF_CONFIG} --log-level $LOG_LEVEL > $log_path 2>&1 &
 
   echo $! > $pid_path
   pid_value=$(cat $pid_path)
