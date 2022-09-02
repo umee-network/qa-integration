@@ -85,7 +85,7 @@ class TestOracleModule(unittest.TestCase):
         wait_for_next_voting_period()
 
         # Submit 1st prevote
-        status, prevote_1 = tx_submit_prevote(validator1_val["name"], vote_hash_1, validator1_home)
+        status = tx_submit_prevote(validator1_val["name"], vote_hash_1, validator1_home)
         self.assertTrue(status)
 
         # Query to verify 1st prevote exists
