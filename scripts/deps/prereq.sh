@@ -5,16 +5,24 @@
 ## related to go are also exported to bashrc.
 
 command_exists () {
-    type "$1" &> /dev/null ;
+  type "$1" &> /dev/null ;
 }
 
-CURPATH=`dirname $(realpath "$0")`
-cd $CURPATH
-source ../../env
+is_macos() {
+  [[ "$OSTYPE" == "darwin"* ]]
+}
 
-# if command_exists go ; then
-#   echo "Golang is already installed"
-# else
+install_macos() {
+  if command_exists brew; then
+    brew install $1
+  else
+    echo 'Please install `brew` and try again, eg:'
+    echo '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+    exit 1
+  fi
+}
+
+install_go () {
   sudo rm -rf /usr/local/go
   echo "Install dependencies"
   sudo apt update
@@ -31,7 +39,33 @@ source ../../env
   echo "" >> ~/.bashrc
   echo 'export GOROOT=/usr/local/go' >> ~/.bashrc
   source ~/.bashrc
-# fi
+}
+
+# get absolute parent directory path of current file
+CURPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+cd $CURPATH
+source ../../env-umee
+
+if command_exists go;
+then
+  echo "Golang is already installed"
+  echo "checking go version"
+  goversionstr="$(go version)"
+  if [[ ! "$goversionstr" == *"$goversion"* ]]
+  then
+    echo "$goversionstr is different of $goversion"
+    if is_macos; then
+      install_macos golang
+    else
+      install_go
+    fi
+  else
+    echo "It is the same version, will not install"
+  fi
+else
+  install_go
+fi
+
 which go
 go version
 
@@ -39,35 +73,60 @@ if command_exists python3 ; then
   echo "python3-dev is already installed"
 else
   echo "Installing python3-dev"
-  sudo apt update
-  sudo apt install python3-dev -y
+  if is_macos ; then
+    install_macos python3
+  else
+    sudo apt update
+    sudo apt install python3-dev -y
+  fi
 fi
 
 if command_exists pylint ; then
   echo "pylint is already installed"
 else
   echo "Installing pylint"
-  sudo apt update
-  sudo apt install pylint -y
+  if is_macos ; then
+    install_macos pylint
+  else
+    sudo apt update
+    sudo apt install pylint -y
+  fi
 fi
 
-if command_exists pip ; then
-  echo "pip is already installed"
+if is_macos ; then
+  # pip3 is installed with brew, above
+  pip3 install -r ../../internal/requirements.txt
 else
-  echo "Installing pip"
-  sudo apt update
-  sudo apt install python3-pip -y
+  if ! command_exists pip ; then
+    echo "Installing pip"
+    sudo apt update
+    sudo apt install python3-pip -y
+  fi
+  pip install -r ../../internal/requirements.txt
 fi
-
-pip install -r ../../internal/requirements.txt
 
 if command_exists mongod ; then
   echo "mongo db is already installed"
 else
-  sudo apt-get install gnupg
-  wget -qO - https://www.mongodb.org/static/pgp/server-5.0.asc | sudo apt-key add -
-  echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/5.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-5.0.list
-  sudo apt-get update -y
-  sudo apt-get install mongodb-org -y
+  echo "Installing mongo db"
+  if is_macos ; then
+    brew tap mongodb/brew
+    brew update
+    install_macos mongodb-community@6.0
+  else
+    sudo apt-get install gnupg
+    wget -qO - https://www.mongodb.org/static/pgp/server-5.0.asc | sudo apt-key add -
+    echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/5.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-5.0.list
+    sudo apt-get update -y
+    sudo apt-get install mongodb-org -y
+  fi
 fi
-sudo systemctl start mongod
+
+if is_macos ; then
+  brew services start mongodb-community@6.0
+else
+  # TODO: check how to do that without systemctl
+  if command_exists systemctl ; then
+    sudo systemctl start mongod
+  fi
+fi
