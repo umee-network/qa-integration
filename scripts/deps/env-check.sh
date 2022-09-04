@@ -29,7 +29,12 @@ fi
 
 if [ -z $NUM_VALS ]
 then
-    NUM_VALS = 3
+    NUM_VALS=3
+fi
+
+if [ -z $LOG_LEVEL ]
+then
+    LOG_LEVEL="info"
 fi
 
 # export daemon home paths
