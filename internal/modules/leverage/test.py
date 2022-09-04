@@ -22,13 +22,13 @@ from internal.modules.bank.query import query_balances
 logging.basicConfig(format="%(message)s", level=logging.DEBUG)
 
 validator1_home = f"{env.DAEMON_HOME}-1"
-validator2_home = f"{env.DAEMON_HOME}-2"
 
 validator1_acc = keys_show("validator1", "val")[1]
-validator2_acc = keys_show("validator2", "val", validator2_home)[1]
 
-acc1 = keys_show("account1")[1]
-acc2 = keys_show("account2")[1]
+accounts = []
+for i in range(2):
+    acc = keys_show("account" + str(i+1))[1]
+    accounts.append(acc)
 
 class TestLeverageModuleTxsQueries(unittest.TestCase):
     @classmethod
@@ -55,128 +55,155 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
 
     def test_supply_withdraw(self):
         # Query User A bank balance of uumee
-        status, acc1_balance = query_balances(acc1["address"])
+        status, acc1_balance = query_balances(accounts[0]["address"])
         self.assertTrue(status)
         print("\nAcc1 balances at start of supply/withdraw test: ", acc1_balance["balances"])
         self.assert_equal_balances(acc1_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'1000000000000'})
 
         # User A supplies between 10% and 90% of their uumee balance
-        status = tx_supply(acc1["name"], acc1["address"], "500000000000uumee", validator1_home)
+        status = tx_supply(accounts[0]["name"], accounts[0]["address"], "500000000000uumee", validator1_home)
         self.assertTrue(status)
         time.sleep(2)
 
         # Query User A bank balance of u/uumee
-        status, acc1_balance = query_balances(acc1["address"])
+        status, acc1_balance = query_balances(accounts[0]["address"])
         self.assertTrue(status)
         print("\nAcc1 balances after supplying 500000 umee: ", acc1_balance["balances"])
         self.assert_equal_balances(acc1_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','u/uumee':'500000000000','uumee':'500000000000'})
 
         # User A withdraws between 10% and 90% of their u/uumee balance
-        status = tx_withdraw(acc1["name"], acc1["address"], "500000000000u/uumee", validator1_home)
+        status = tx_withdraw(accounts[0]["name"], accounts[0]["address"], "500000000000u/uumee", validator1_home)
         self.assertTrue(status)
         time.sleep(2)
 
         # Query User A bank balance of uumee
-        status, acc1_balance = query_balances(acc1["address"])
+        status, acc1_balance = query_balances(accounts[0]["address"])
         self.assertTrue(status)
         print("\nAcc1 balances after withdrawing 500000 u/umee: ", acc1_balance["balances"])
         self.assert_equal_balances(acc1_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'1000000000000'})
 
     def test_supply_withdraw_atom(self):
         # Query User A bank balance of atom
-        status, acc1_balance = query_balances(acc1["address"])
+        status, acc1_balance = query_balances(accounts[0]["address"])
         self.assertTrue(status)
         print("\nAcc1 balances at start of supply/withdraw atom test: ", acc1_balance["balances"])
         self.assert_equal_balances(acc1_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'1000000000000'})
 
         # User A supplies between 10% and 90% of their atom balance
-        status = tx_supply(acc1["name"], acc1["address"], "5000000000ibc/atom", validator1_home)
+        status = tx_supply(accounts[0]["name"], accounts[0]["address"], "5000000000ibc/atom", validator1_home)
         self.assertTrue(status)
         time.sleep(2)
 
         # Query User A bank balance of u/ibc/atom
-        status, acc1_balance = query_balances(acc1["address"])
+        status, acc1_balance = query_balances(accounts[0]["address"])
         self.assertTrue(status)
         print("\nAcc1 balances after supplying 5000 atom: ", acc1_balance["balances"])
         self.assert_equal_balances(acc1_balance, {'ibc/atom':'5000000000','ibc/juno':'20000000000','u/ibc/atom':'5000000000','uumee':'1000000000000'})
 
         # User A withdraws between 10% and 90% of their u/ibc/atom balance
-        status = tx_withdraw(acc1["name"], acc1["address"], "5000000000u/ibc/atom", validator1_home)
+        status = tx_withdraw(accounts[0]["name"], accounts[0]["address"], "5000000000u/ibc/atom", validator1_home)
         self.assertTrue(status)
         time.sleep(2)
 
         # Query User A bank balance of atom
-        status, acc1_balance = query_balances(acc1["address"])
+        status, acc1_balance = query_balances(accounts[0]["address"])
         self.assertTrue(status)
         print("\nAcc1 balances after withdrawing 5000 u/atom: ", acc1_balance["balances"])
         self.assert_equal_balances(acc1_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'1000000000000'})
 
     def test_simple_functional(self):
         # Query User A and User B bank balance
-        status, acc1_balance = query_balances(acc1["address"])
+        status, acc1_balance = query_balances(accounts[0]["address"])
         self.assertTrue(status)
         print("\nAcc1 balances at start of simple functional test: ", acc1_balance["balances"])
         self.assert_equal_balances(acc1_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'1000000000000'})
-        status, acc2_balance = query_balances(acc2["address"])
+        status, acc2_balance = query_balances(accounts[0]["address"])
         self.assertTrue(status)
-        print("\nacc2_balance at start of simple functional test: ", acc2_balance["balances"])
+        print("\nAcc2 balances at start of simple functional test: ", acc2_balance["balances"])
         self.assert_equal_balances(acc2_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'1000000000000'})
 
         # User A supplies and collaterlizes 10000 umee
-        status = tx_supply(acc1["name"], acc1["address"], "10000000000uumee", validator1_home)
+        status = tx_supply(accounts[0]["name"], accounts[0]["address"], "10000000000uumee", validator1_home)
         self.assertTrue(status)
         time.sleep(2)
-        status = tx_collateralize(acc1["name"], acc1["address"], "10000000000u/uumee", validator1_home)
+        status = tx_collateralize(accounts[0]["name"], accounts[0]["address"], "10000000000u/uumee", validator1_home)
         self.assertTrue(status)
         time.sleep(2)
 
         # User B supplies 2 atom
-        status = tx_supply(acc2["name"], acc2["address"], "2000000ibc/atom", validator1_home)
+        status = tx_supply(accounts[1]["name"], accounts[1]["address"], "2000000ibc/atom", validator1_home)
         self.assertTrue(status)
         time.sleep(2)
 
-        status, acc1_balance = query_balances(acc1["address"])
+        status, acc1_balance = query_balances(accounts[0]["address"])
         self.assertTrue(status)
         print("\nAcc1 balances after supplying and collateralizing 10000 umee: ", acc1_balance["balances"])
         self.assert_equal_balances(acc1_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'990000000000'})
-        status, acc2_balance = query_balances(acc2["address"])
+        status, acc2_balance = query_balances(accounts[1]["address"])
         self.assertTrue(status)
         print("\nAcc2 balances after supplying 2 atom: ", acc2_balance["balances"])
         self.assert_equal_balances(acc2_balance, {'ibc/atom':'9998000000','ibc/juno':'20000000000','u/ibc/atom':'2000000','uumee':'1000000000000'})
 
         # User A borrows 1 atom
-        status = tx_borrow(acc1["name"], acc1["address"], "1000000ibc/atom", validator1_home)
+        status = tx_borrow(accounts[0]["name"], accounts[0]["address"], "1000000ibc/atom", validator1_home)
         self.assertTrue(status)
         time.sleep(2)
 
         # User B withdraws 1 atom
-        status = tx_withdraw(acc2["name"], acc2["address"], "1000000u/ibc/atom", validator1_home)
+        status = tx_withdraw(accounts[1]["name"], accounts[1]["address"], "1000000u/ibc/atom", validator1_home)
         self.assertTrue(status)
         time.sleep(2)
 
-        status, acc1_balance = query_balances(acc1["address"])
+        status, acc1_balance = query_balances(accounts[0]["address"])
         self.assertTrue(status)
         print("\nAcc1 balances after borrowing 1 atom: ", acc1_balance["balances"])
         self.assert_equal_balances(acc1_balance, {'ibc/atom':'10001000000','ibc/juno':'20000000000','uumee':'990000000000'})
-        status, acc2_balance = query_balances(acc2["address"])
+        status, acc2_balance = query_balances(accounts[1]["address"])
         self.assertTrue(status)
         print("\nAcc2 balances after withdrawing 1 u/atom: ", acc2_balance["balances"])
         self.assert_equal_balances(acc2_balance, {'ibc/atom':'9999000000','ibc/juno':'20000000000','u/ibc/atom':'1000000','uumee':'1000000000000'})
 
         # User A pays back 1 atom
-        status = tx_repay(acc1["name"], acc1["address"], "1000000ibc/atom", validator1_home)
+        status = tx_repay(accounts[0]["name"], accounts[0]["address"], "1000000ibc/atom", validator1_home)
         self.assertTrue(status)
         time.sleep(2)
 
-        status, acc1_balance = query_balances(acc1["address"])
+        status, acc1_balance = query_balances(accounts[0]["address"])
         self.assertTrue(status)
         print("\nAcc1 balances after repaying 1 atom: ", acc1_balance["balances"])
         self.assert_equal_balances(acc1_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'990000000000'})
-        status, acc2_balance = query_balances(acc2["address"])
+        status, acc2_balance = query_balances(accounts[0]["address"])
         self.assertTrue(status)
         print("\nAcc2 balances after acc1 repaid 1 atom: ", acc2_balance["balances"])
         self.assert_equal_balances(acc2_balance, {'ibc/atom':'9999000000','ibc/juno':'20000000000','u/ibc/atom':'1000000','uumee':'1000000000000'})
 
+    # def test_functional_one(self):
+    #     # account1, ..., account50 supply and collateralize 10000 umee
+    #     for i in range(50):
+    #         status = tx_supply(accounts[i]["name"], accounts[i]["address"], "10000000000uumee", validator1_home)
+    #         self.assertTrue(status)
+    #         status = tx_collateralize(accounts[i]["name"], accounts[i]["address"], "10000000000u/uumee", validator1_home)
+    #         self.assertTrue(status)
+
+    #     # account51, ..., account100 supply and collateralize 1000 umee
+    #     for i in range(50,100):
+    #         status = tx_supply(accounts[i]["name"], accounts[i]["address"], "1000000000uumee", validator1_home)
+    #         self.assertTrue(status)
+    #         status = tx_collateralize(accounts[i]["name"], accounts[i]["address"], "1000000000u/uumee", validator1_home)
+    #         self.assertTrue(status)
+
+    #     # account101, ..., account200 supply and collateralize 10000 atom and 200 juno
+    #     for i in range(100,200):
+    #         status = tx_supply(accounts[i]["name"], accounts[i]["address"], "1000000000ibc/atom", validator1_home)
+    #         self.assertTrue(status)
+    #         status = tx_collateralize(accounts[i]["name"], accounts[i]["address"], "1000000000u/ibc/atom", validator1_home)
+    #         self.assertTrue(status)
+    #         status = tx_supply(accounts[i]["name"], accounts[i]["address"], "200000000ibc/juno", validator1_home)
+    #         self.assertTrue(status)
+    #         status = tx_collateralize(accounts[i]["name"], accounts[i]["address"], "200000000u/ibc/juno", validator1_home)
+    #         self.assertTrue(status)
+
+        # time.sleep(10)
 
 if __name__ == "__main__":
     logging.info("INFO: running leverage module tests")
