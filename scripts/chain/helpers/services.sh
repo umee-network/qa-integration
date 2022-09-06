@@ -10,7 +10,7 @@ command_exists () {
 
 service_exists() {
   local service=$1
-  if [[ $(systemctl list-units --all -t service --full --no-legend "$service.service" | sed 's/^\s*//g' | cut -f1 -d' ') == $service.service ]]; then
+  if [[ $(systemctl list-units --all -t service --full --no-legend "$service" | sed 's/^\s*//g' | cut -f1 -d' ') == $service ]]; then
     return 0
   else
     return 1
@@ -30,7 +30,7 @@ stop_service() {
   local service=$1
 
   if service_exists $service; then
-    sudo -S systemctl stop $service.service
+    sudo -S systemctl stop $service
     echo "-- Executed sudo -S systemctl stop $service.service --"
   fi
 }
