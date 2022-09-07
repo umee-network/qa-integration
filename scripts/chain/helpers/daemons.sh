@@ -43,7 +43,7 @@ start_price_feeder() {
   # Setup delegated price-feeder account
   ACCT_NUM=$(($VAL_NUM + 2))
   ACCT_ADDR=$($DAEMON keys show account$ACCT_NUM -a --home $DAEMON_HOME-1 --keyring-backend test)
-  $DAEMON tx oracle delegate-feed-consent validator$VAL_NUM $ACCT_ADDR --keyring-backend test --from $alidator$VAL_NUM \
+  $DAEMON tx oracle delegate-feed-consent validator$VAL_NUM $ACCT_ADDR --keyring-backend test \
     --chain-id $CHAINID --home $DAEMON_HOME-$VAL_NUM --gas 2000000 --node tcp://localhost:${RPC} -y
 
   if command_exists systemctl ; then
