@@ -21,9 +21,6 @@ cd $CURPATH
 # load daemons funcs
 . $CURPATH/helpers/daemons.sh
 
-# NUM_ACCOUNTS represents number of accounts to initialize while bootstropping the chain.
-# These are the additional accounts along with the validator accounts.
-NUM_ACCOUNTS=$1
 echo "INFO: Setting up $NUM_VALS validator nodes and $NUM_ACCOUNTS accounts"
 cd $HOME
 mkdir -p "$GOBIN"

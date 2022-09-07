@@ -60,7 +60,7 @@ validator1_acc = keys_show("validator1", "val")[1]
 validator2_val = keys_show("validator2", "val", validator2_home)[1]
 
 accounts = []
-for i in range(2):
+for i in range(env.NUM_ACCOUNTS):
     acc = keys_show("account" + str(i+1))[1]
     accounts.append(acc)
 
