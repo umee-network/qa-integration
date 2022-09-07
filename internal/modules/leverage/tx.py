@@ -61,7 +61,7 @@ def tx_borrow(
     home,
     gas=DEFAULT_GAS,
 ):
-    command = f"""{DAEMON} tx leverage borrow {borrower} {amount} \
+    command = f"""{DAEMON} tx leverage borrow {amount} \
 --chain-id {CHAINID} --keyring-backend test \
 --home {home} --from {from_key} --node {RPC} --output json -y --gas {gas}"""
     return exec_command(command)
@@ -73,7 +73,7 @@ def tx_repay(
     home,
     gas=DEFAULT_GAS,
 ):
-    command = f"""{DAEMON} tx leverage repay {borrower} {amount} \
+    command = f"""{DAEMON} tx leverage repay {amount} \
 --chain-id {CHAINID} --keyring-backend test \
 --home {home} --from {from_key} --node {RPC} --output json -y --gas {gas}"""
     return exec_command(command)
