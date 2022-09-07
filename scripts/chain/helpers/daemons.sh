@@ -36,6 +36,12 @@ start_umeed() {
 start_price_feeder() {
   VAL_NUM=$1
 
+  # Setup delegated price-feeder account
+  ACCT_NUM=$(($VAL_NUM + 2))
+  ACCT_ADDR=$($DAEMON keys show account$ACCT_NUM -a --home $DAEMON_HOME-1 --keyring-backend test)
+  $DAEMON tx oracle delegate-feed-consent validator$VAL_NUM $ACCT_ADDR --keyring-backend test --from $alidator$VAL_NUM \
+    --chain-id $CHAINID --home $DAEMON_HOME-$VAL_NUM --gas 2000000 --node tcp://localhost:${RPC} -y
+
   if command_exists systemctl ; then
     start_price_feeder_systemctl $VAL_NUM
   else
@@ -159,6 +165,7 @@ price_feeder_set_config() {
   RPC=$((16657 + $INC))
   GRPC=$((9092 + $INC))
   PF_PORT=$((7171 + $INC))
+  ACCT_NUM=$(($VAL_NUM + 2))
 
   # Copy the price-feeder config template and replace variables
   CONFIG_DIR="${DAEMON_HOME}-${VAL_NUM}/config"
@@ -166,8 +173,8 @@ price_feeder_set_config() {
   cp $CURPATH/../configs/price-feeder.toml $CONFIG_DIR
 
   PRICE_FEEDER_VALIDATOR=$(eval "umeed keys show validator${VAL_NUM} --home ${DAEMON_HOME}-${VAL_NUM} --bech val --keyring-backend test --output json | jq .address")
-  PRICE_FEEDER_ADDRESS=$(eval "umeed keys show validator${VAL_NUM} --home ${DAEMON_HOME}-${VAL_NUM} --bech acc --keyring-backend test --output json | jq .address")
-  UMEE_VAL_KEY_DIR="${DAEMON_HOME}-${VAL_NUM}"
+  PRICE_FEEDER_ADDRESS="\"$(eval "umeed keys show account${ACCT_NUM} -a --home $DAEMON_HOME-1 --keyring-backend test")\""
+  UMEE_VAL_KEY_DIR="${DAEMON_HOME}-1"
   UMEE_VAL_HOST="tcp://localhost:${RPC}"
 
   sed -i -e "s/\$PF_PORT/${PF_PORT}/g" $PF_CONFIG

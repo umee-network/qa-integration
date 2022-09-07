@@ -30,12 +30,11 @@ done
 
 if [ $FILES_EXISTS == "true" ]; then
     echo "INFO: Number of validator nodes to be shutdown and disabled: $NUM_VALS"
-    echo "---------- Stopping $DAEMON-${a} --------"
     for (( a=1; a<=$NUM_VALS; a++ ))
     do
         if command_exists systemctl ; then
-            stop_service $DAEMON-${a}.service
-            stop_service $DAEMON-${a}-pf.service
+            stop_service $DAEMON-${a}
+            stop_service $DAEMON-${a}-pf
             continue
         fi
 

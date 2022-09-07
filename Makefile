@@ -11,6 +11,11 @@ setup-chain: install-deps stop-chain
 	@echo "Waiting for chain to start..."
 	@sleep 7
 
+setup-chain-no-pf: install-deps stop-chain
+	@bash ./scripts/chain/start_chain.sh false
+	@echo "Waiting for chain to start..."
+	@sleep 7
+
 pause-chain:
 	@bash ./scripts/chain/pause_nodes.sh
 
@@ -59,7 +64,7 @@ test-leverage-module: setup-chain
 	TEST_TYPE=leverage-module bash ./scripts/tests/leverage_module.sh
 	$(MAKE) stop-chain
 
-test-oracle-module: setup-chain
+test-oracle-module: setup-chain-no-pf
 	@echo "Running oracle module tests..."
 	TEST_TYPE=oracle-module bash ./scripts/tests/oracle_module.sh
 	$(MAKE) stop-chain
