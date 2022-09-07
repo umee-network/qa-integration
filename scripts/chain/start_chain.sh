@@ -24,7 +24,11 @@ cd $CURPATH
 # NUM_ACCOUNTS represents number of accounts to initialize while bootstropping the chain.
 # These are the additional accounts along with the validator accounts.
 NUM_ACCOUNTS=$1
+ENABLE_PRICE_FEEDER=${2:-true}
+
 echo "INFO: Setting up $NUM_VALS validator nodes and $NUM_ACCOUNTS accounts"
+echo "Price Feeder Enabled: ${ENABLE_PRICE_FEEDER}"
+
 cd $HOME
 mkdir -p "$GOBIN"
 echo "INFO: Installing cosmovisor"
@@ -128,12 +132,11 @@ do
     $DAEMON --home $DAEMON_HOME-1 add-genesis-account $($DAEMON keys show validator$a -a --home $DAEMON_HOME-$a --keyring-backend test) 1000000000000$DENOM
 done
 
-
-echo "INFO: Adding additional accounts to genesis"
 if [ -z $NUM_ACCOUNTS ]
 then
     echo "INFO: Second argument was empty, not setting up additional account"
 else
+    echo "INFO: Adding an additional ${NUM_ACCOUNTS} accounts to genesis"
     for (( a=1; a<=$NUM_ACCOUNTS; a++ ))
     do
         $DAEMON --home $DAEMON_HOME-1 add-genesis-account $($DAEMON keys show account$a -a --home $DAEMON_HOME-1 --keyring-backend test) 1000000000000$DENOM
@@ -223,7 +226,9 @@ do
     sed -i -e 's#skip_timeout_commit = false#skip_timeout_commit = true#' $DAEMON_HOME-$a/config/config.toml
     sed -i -e 's#minimum-gas-prices = ""#minimum-gas-prices = "0uumee"#' $DAEMON_HOME-$a/config/app.toml
 
-    price_feeder_set_config $a
+    if $ENABLE_PRICE_FEEDER; then
+        price_feeder_set_config $a
+    fi
 done
 
 # create systemd service files
@@ -232,8 +237,11 @@ do
     start_umeed $a
 done
 
-echo "After $DAEMON started, we can start price-feeder"
-for (( a=1; a<=$NUM_VALS; a++ ))
-do
-    start_price_feeder $a
-done
+if $ENABLE_PRICE_FEEDER; then
+    echo "Sleeping 5 seconds for account sync before price-feeder setup"
+    sleep 10
+    for (( a=1; a<=$NUM_VALS; a++ ))
+    do
+        start_price_feeder $a
+    done
+fi

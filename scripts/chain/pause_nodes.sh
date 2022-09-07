@@ -20,8 +20,8 @@ echo "---------- Stopping systemd service files --------"
 for (( a=1; a<=$NUM_VALS; a++ ))
 do
     if command_exists systemctl ; then
-        stop_service $DAEMON-${a}.service
-        stop_service $DAEMON-${a}-pf.service
+        stop_service $DAEMON-${a}
+        stop_service $DAEMON-${a}-pf
         continue
     fi
 
