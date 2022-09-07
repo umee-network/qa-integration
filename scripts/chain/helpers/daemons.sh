@@ -36,6 +36,10 @@ start_umeed() {
 start_price_feeder() {
   VAL_NUM=$1
 
+  DIFF=$(($VAL_NUM - 1))
+  INC=$(($DIFF * 2))
+  RPC=$((16657 + $INC))
+
   # Setup delegated price-feeder account
   ACCT_NUM=$(($VAL_NUM + 2))
   ACCT_ADDR=$($DAEMON keys show account$ACCT_NUM -a --home $DAEMON_HOME-1 --keyring-backend test)
