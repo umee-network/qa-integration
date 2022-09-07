@@ -120,24 +120,24 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
             self.assertEqual(acc_balance["balances"][i]["amount"], amount)
             i+=1
 
-    def supply_and_collateralize(self, account_name, account_address, supply_amount, collateralize_amount, validator_home):
-        status = tx_supply(account_name, account_address, supply_amount, validator_home)
+    def supply_and_collateralize(self, account_name, supply_amount, collateralize_amount, validator_home):
+        status = tx_supply(account_name, supply_amount, validator_home)
         self.assertTrue(status)
-        status = tx_collateralize(account_name, account_address, collateralize_amount, validator_home)
+        status = tx_collateralize(account_name, collateralize_amount, validator_home)
         self.assertTrue(status)
 
     def batch_borrow(self, first_account, last_account, amount, validator_home):
         for i in range(first_account, last_account):
-            status = tx_borrow(accounts[i]["name"], accounts[i]["address"], amount, validator_home)
+            status = tx_borrow(accounts[i]["name"], amount, validator_home)
             self.assertTrue(status)
 
     def supply_or_withdraw(self):
         supply = random.choice([True, False])
         if supply:
-            status = tx_supply(accounts[0]["name"], accounts[0]["address"], "1000000uumee", validator1_home)
+            status = tx_supply(accounts[0]["name"], "1000000uumee", validator1_home)
             self.assertTrue(status)
         else:
-            status = tx_withdraw(accounts[0]["name"], accounts[0]["address"], "1000000u/uumee", validator1_home)
+            status = tx_withdraw(accounts[0]["name"], "1000000u/uumee", validator1_home)
             self.assertTrue(status)
 
     def test_query_total_supply(self):
@@ -153,7 +153,7 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         self.assert_equal_balances(acc1_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'1000000000000'})
 
         # User A supplies between 10% and 90% of their uumee balance
-        status = tx_supply(accounts[0]["name"], accounts[0]["address"], "500000000000uumee", validator1_home)
+        status = tx_supply(accounts[0]["name"], "500000000000uumee", validator1_home)
         self.assertTrue(status)
         time.sleep(2)
 
@@ -164,7 +164,7 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         self.assert_equal_balances(acc1_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','u/uumee':'500000000000','uumee':'500000000000'})
 
         # User A withdraws between 10% and 90% of their u/uumee balance
-        status = tx_withdraw(accounts[0]["name"], accounts[0]["address"], "500000000000u/uumee", validator1_home)
+        status = tx_withdraw(accounts[0]["name"], "500000000000u/uumee", validator1_home)
         self.assertTrue(status)
         time.sleep(2)
 
@@ -193,7 +193,7 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         self.assert_equal_balances(acc1_balance, {'ibc/atom':'5000000000','ibc/juno':'20000000000','u/ibc/atom':'5000000000','uumee':'1000000000000'})
 
         # User A withdraws between 10% and 90% of their u/ibc/atom balance
-        status = tx_withdraw(accounts[0]["name"], accounts[0]["address"], "5000000000u/ibc/atom", validator1_home)
+        status = tx_withdraw(accounts[0]["name"], "5000000000u/ibc/atom", validator1_home)
         self.assertTrue(status)
         time.sleep(2)
 
@@ -221,15 +221,15 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         self.assert_equal_balances(acc2_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'1000000000000'})
 
         # User A supplies and collaterlizes 10000 umee
-        status = tx_supply(accounts[0]["name"], accounts[0]["address"], "10000000000uumee", validator1_home)
+        status = tx_supply(accounts[0]["name"], "10000000000uumee", validator1_home)
         self.assertTrue(status)
         time.sleep(2)
-        status = tx_collateralize(accounts[0]["name"], accounts[0]["address"], "10000000000u/uumee", validator1_home)
+        status = tx_collateralize(accounts[0]["name"], "10000000000u/uumee", validator1_home)
         self.assertTrue(status)
         time.sleep(2)
 
         # User B supplies 2 atom
-        status = tx_supply(accounts[1]["name"], accounts[1]["address"], "2000000ibc/atom", validator1_home)
+        status = tx_supply(accounts[1]["name"], "2000000ibc/atom", validator1_home)
         self.assertTrue(status)
         time.sleep(2)
 
@@ -243,12 +243,12 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         self.assert_equal_balances(acc2_balance, {'ibc/atom':'9998000000','ibc/juno':'20000000000','u/ibc/atom':'2000000','uumee':'1000000000000'})
 
         # User A borrows 1 atom
-        status = tx_borrow(accounts[0]["name"], accounts[0]["address"], "1000000ibc/atom", validator1_home)
+        status = tx_borrow(accounts[0]["name"], "1000000ibc/atom", validator1_home)
         self.assertTrue(status)
         time.sleep(2)
 
         # User B withdraws 1 atom
-        status = tx_withdraw(accounts[1]["name"], accounts[1]["address"], "1000000u/ibc/atom", validator1_home)
+        status = tx_withdraw(accounts[1]["name"], "1000000u/ibc/atom", validator1_home)
         self.assertTrue(status)
         time.sleep(2)
 
@@ -262,7 +262,7 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         self.assert_equal_balances(acc2_balance, {'ibc/atom':'9999000000','ibc/juno':'20000000000','u/ibc/atom':'1000000','uumee':'1000000000000'})
 
         # User A pays back 1 atom
-        status = tx_repay(accounts[0]["name"], accounts[0]["address"], "1000000ibc/atom", validator1_home)
+        status = tx_repay(accounts[0]["name"], "1000000ibc/atom", validator1_home)
         self.assertTrue(status)
         time.sleep(2)
 
@@ -291,27 +291,27 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
 
     #     # account1, ..., account50 supply and collateralize 10000 umee
     #     for i in range(50):
-    #         status = tx_supply(accounts[i]["name"], accounts[i]["address"], "10000000000uumee", validator1_home)
+    #         status = tx_supply(accounts[i]["name"], "10000000000uumee", validator1_home)
     #         self.assertTrue(status)
-    #         status = tx_collateralize(accounts[i]["name"], accounts[i]["address"], "10000000000u/uumee", validator1_home)
+    #         status = tx_collateralize(accounts[i]["name"], "10000000000u/uumee", validator1_home)
     #         self.assertTrue(status)
 
     #     # account51, ..., account100 supply and collateralize 1000 umee
     #     for i in range(50,99):
-    #         status = tx_supply(accounts[i]["name"], accounts[i]["address"], "1000000000uumee", validator1_home)
+    #         status = tx_supply(accounts[i]["name"], "1000000000uumee", validator1_home)
     #         self.assertTrue(status)
-    #         status = tx_collateralize(accounts[i]["name"], accounts[i]["address"], "1000000000u/uumee", validator1_home)
+    #         status = tx_collateralize(accounts[i]["name"], "1000000000u/uumee", validator1_home)
     #         self.assertTrue(status)
 
     #     # account101, ..., account200 supply and collateralize 10000 atom and 200 juno
     #     for i in range(100,199):
-    #         status = tx_supply(accounts[i]["name"], accounts[i]["address"], "1000000000ibc/atom", validator1_home)
+    #         status = tx_supply(accounts[i]["name"], "1000000000ibc/atom", validator1_home)
     #         self.assertTrue(status)
-    #         status = tx_collateralize(accounts[i]["name"], accounts[i]["address"], "1000000000u/ibc/atom", validator1_home)
+    #         status = tx_collateralize(accounts[i]["name"], "1000000000u/ibc/atom", validator1_home)
     #         self.assertTrue(status)
-    #         status = tx_supply(accounts[i]["name"], accounts[i]["address"], "200000000ibc/juno", validator1_home)
+    #         status = tx_supply(accounts[i]["name"], "200000000ibc/juno", validator1_home)
     #         self.assertTrue(status)
-    #         status = tx_collateralize(accounts[i]["name"], accounts[i]["address"], "200000000u/ibc/juno", validator1_home)
+    #         status = tx_collateralize(accounts[i]["name"], "200000000u/ibc/juno", validator1_home)
     #         self.assertTrue(status)
 
     #     time.sleep(10)
@@ -323,7 +323,7 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
     #     for _ in range(8):
     #         for i in range(50,99):
     #             t = threading.Thread(target=self.supply_and_collateralize,
-    #             args=(accounts[i]["name"], accounts[i]["address"], supply_amount, collateralize_amount, validator1_home))
+    #             args=(accounts[i]["name"], supply_amount, collateralize_amount, validator1_home))
     #             t.start()
     #         time.sleep(60)
 
@@ -367,27 +367,27 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
 
     #     # account1, ..., account50 supply and collateralize 10000 umee
     #     for i in range(50):
-    #         status = tx_supply(accounts[i]["name"], accounts[i]["address"], "10000000000uumee", validator1_home)
+    #         status = tx_supply(accounts[i]["name"], "10000000000uumee", validator1_home)
     #         self.assertTrue(status)
-    #         status = tx_collateralize(accounts[i]["name"], accounts[i]["address"], "10000000000u/uumee", validator1_home)
+    #         status = tx_collateralize(accounts[i]["name"], "10000000000u/uumee", validator1_home)
     #         self.assertTrue(status)
 
     #     # account51, ..., account100 supply and collateralize 1000 umee
     #     for i in range(50,99):
-    #         status = tx_supply(accounts[i]["name"], accounts[i]["address"], "1000000000uumee", validator1_home)
+    #         status = tx_supply(accounts[i]["name"], "1000000000uumee", validator1_home)
     #         self.assertTrue(status)
-    #         status = tx_collateralize(accounts[i]["name"], accounts[i]["address"], "1000000000u/uumee", validator1_home)
+    #         status = tx_collateralize(accounts[i]["name"], "1000000000u/uumee", validator1_home)
     #         self.assertTrue(status)
 
     #     # account101, ..., account200 supply and collateralize 10000 atom and 200 juno
     #     for i in range(100,199):
-    #         status = tx_supply(accounts[i]["name"], accounts[i]["address"], "1000000000ibc/atom", validator1_home)
+    #         status = tx_supply(accounts[i]["name"], "1000000000ibc/atom", validator1_home)
     #         self.assertTrue(status)
-    #         status = tx_collateralize(accounts[i]["name"], accounts[i]["address"], "1000000000u/ibc/atom", validator1_home)
+    #         status = tx_collateralize(accounts[i]["name"], "1000000000u/ibc/atom", validator1_home)
     #         self.assertTrue(status)
-    #         status = tx_supply(accounts[i]["name"], accounts[i]["address"], "200000000ibc/juno", validator1_home)
+    #         status = tx_supply(accounts[i]["name"], "200000000ibc/juno", validator1_home)
     #         self.assertTrue(status)
-    #         status = tx_collateralize(accounts[i]["name"], accounts[i]["address"], "200000000u/ibc/juno", validator1_home)
+    #         status = tx_collateralize(accounts[i]["name"], "200000000u/ibc/juno", validator1_home)
     #         self.assertTrue(status)
 
     #     time.sleep(10)
@@ -399,7 +399,7 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
     #     for _ in range(8):
     #         for i in range(50,99):
     #             t = threading.Thread(target=self.supply_and_collateralize,
-    #             args=(accounts[i]["name"], accounts[i]["address"], supply_amount, collateralize_amount, validator1_home))
+    #             args=(accounts[i]["name"], supply_amount, collateralize_amount, validator1_home))
     #             t.start()
     #         time.sleep(60)
 
