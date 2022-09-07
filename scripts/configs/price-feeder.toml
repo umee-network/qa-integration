@@ -51,15 +51,9 @@ tmrpc_endpoint = "http://localhost:$RPC"
 
 [telemetry]
 service-name = "price-feeder"
-<<<<<<< HEAD
-enabled = true
-enable-hostname = true
-enable-hostname_label = true
-=======
 enabled = false
 enable-hostname = true
 enable-hostname-label = true
->>>>>>> master
 enable-service-label = true
 type = "prometheus"
 global-labels = [["chain-id", "test"]]
