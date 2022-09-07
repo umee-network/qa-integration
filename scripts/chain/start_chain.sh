@@ -238,7 +238,7 @@ do
 done
 
 if $ENABLE_PRICE_FEEDER; then
-    echo "Sleeping 5 seconds for account sync before price-feeder setup"
+    echo "Sleeping 10 seconds for account sync before price-feeder setup"
     sleep 10
     for (( a=1; a<=$NUM_VALS; a++ ))
     do
