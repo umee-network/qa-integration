@@ -16,8 +16,8 @@ echo "---------- Restarting systemd service files --------"
 for (( a=1; a<=$NUM_VALS; a++ ))
 do
     if command_exists systemctl ; then
-        restart_service $DAEMON-${a}.service
-        restart_service $DAEMON-${a}-pf.service
+        restart_service $DAEMON-${a}
+        restart_service $DAEMON-${a}-pf
         continue
     fi
 
