@@ -31,9 +31,11 @@ done
 echo "------- Running unsafe reset all ---------"
 for (( a=1; a<=$NUM_VALS; a++ ))
 do
-    $DAEMON tendermint unsafe-reset-all  --home $DAEMON_HOME-$a
+    if command_exists $DAEMON ; then
+        $DAEMON tendermint unsafe-reset-all  --home $DAEMON_HOME-$a
+        echo "-- Executed $DAEMON unsafe-reset-all  --home $DAEMON_HOME-$a --"
+    fi
     rm -rf $DAEMON_HOME-$a
-    echo "-- Executed $DAEMON unsafe-reset-all  --home $DAEMON_HOME-$a --"
 done
 
 if command_exists systemctl ; then
