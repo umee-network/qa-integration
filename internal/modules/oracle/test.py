@@ -7,7 +7,6 @@ from internal.modules.gov.tx import submit_and_pass_proposal
 from internal.modules.oracle.query import (
     query_aggregate_prevote,
     query_aggregate_vote,
-    node_status,
 )
 from utils import env
 from internal.core.keys import keys_show
@@ -15,6 +14,7 @@ from internal.core.keys import keys_show
 from modules.oracle.query import (
     query_feeder_delegation,
     query_params,
+    wait_for_next_voting_period,
 )
 
 from modules.oracle.tx import (
@@ -40,7 +40,6 @@ EXCHANGE_RATES = ExchangeRates(
     ExchangeRate("JUNO", "0.50"),
 )
 
-BLOCKS_PER_VOTING_PERIOD = 5
 STATIC_SALT = "af8ed1e1f34ac1ac00014581cbc31f2f24480b09786ac83aabf2765dada87509"
 
 validator1_home = f"{env.DAEMON_HOME}-1"
@@ -50,16 +49,6 @@ validator3_home = f"{env.DAEMON_HOME}-3"
 validator1_val = keys_show("validator1", "val")[1]
 validator2_val = keys_show("validator2", "val", validator2_home)[1]
 validator3_val = keys_show("validator3", "val", validator3_home)[1]
-
-def get_block_height():
-    _, message = node_status()
-    return message["SyncInfo"]["latest_block_height"]
-
-def wait_for_next_voting_period():
-    block_height = int(get_block_height())
-    vp_block_height = (block_height % BLOCKS_PER_VOTING_PERIOD)
-    if vp_block_height > 0:
-        time.sleep((BLOCKS_PER_VOTING_PERIOD - vp_block_height) / 2)
 
 class TestOracleModule(unittest.TestCase):
     @classmethod
@@ -132,8 +121,8 @@ class TestOracleModule(unittest.TestCase):
         for rate in vote_1["aggregate_vote"]["exchange_rate_tuples"]:
             self.assertEqual(float(rate["exchange_rate"]), float(EXCHANGE_RATES.GetRate(rate["denom"])))
 
-    # Test delegating feed consent from operator to delegate,
-    # then submit voting from delegate on behalf of operator
+    # test_delegate_feed_consent tests delegates feed consent from operator to delegate,
+    # then submits voting from delegate on behalf of operator
     def test_delegate_feed_consent(self):
         operator_name = validator1_val["name"]
         operator_val_address = validator1_val["address"]
@@ -175,6 +164,24 @@ class TestOracleModule(unittest.TestCase):
         self.assertTrue(status)
 
         status = query_aggregate_vote(validator1_val["address"])
+        self.assertTrue(status)
+
+    # test_high_voting_load spams the nodes with pre-votes and votes,
+    # make sure we have node uptime
+    # by attempting to vote again
+    def test_high_voting_load(self):
+        vote_hash = get_hash(EXCHANGE_RATES.ToString(), STATIC_SALT, validator2_val['address'])
+        for i in range(30):
+            tx_submit_prevote(validator2_val["name"], vote_hash, validator2_home, '', 'async')
+            tx_submit_vote(validator2_val["name"], STATIC_SALT, validator2_home, EXCHANGE_RATES.ToString(), '', 'async')
+            tx_submit_prevote(validator3_val["name"], vote_hash, validator3_home, '', 'async')
+            tx_submit_vote(validator3_val["name"], STATIC_SALT, validator3_home, EXCHANGE_RATES.ToString(), '', 'async')
+        time.sleep(3)
+        wait_for_next_voting_period()
+        status, response = tx_submit_prevote(validator2_val["name"], vote_hash, validator2_home)
+        self.assertTrue(status)
+        wait_for_next_voting_period(int(response['height']))
+        status = tx_submit_vote(validator2_val["name"], STATIC_SALT, validator2_home, EXCHANGE_RATES.ToString())
         self.assertTrue(status)
 
     # test_hash makes sure our hasher is accurate
