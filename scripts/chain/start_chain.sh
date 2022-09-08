@@ -25,6 +25,7 @@ cd $CURPATH
 # These are the additional accounts along with the validator accounts.
 NUM_ACCOUNTS=$1
 ENABLE_PRICE_FEEDER=${2:-true}
+CREATE_IBC_ACCOUNTS=${3:-false}
 
 echo "INFO: Setting up $NUM_VALS validator nodes and $NUM_ACCOUNTS accounts"
 echo "Price Feeder Enabled: ${ENABLE_PRICE_FEEDER}"
@@ -140,6 +141,15 @@ else
     for (( a=1; a<=$NUM_ACCOUNTS; a++ ))
     do
         $DAEMON --home $DAEMON_HOME-1 add-genesis-account $($DAEMON keys show account$a -a --home $DAEMON_HOME-1 --keyring-backend test) 1000000000000$DENOM
+    done
+fi
+
+if $CREATE_IBC_ACCOUNTS; then
+    echo "Adding IBC genesis accounts"
+    for (( a=1; a<=1000; a++ ))
+    do
+        $DAEMON keys add "a_${a}" --keyring-backend test --home $DAEMON_HOME-1
+        $DAEMON --home $DAEMON_HOME-1 add-genesis-account $($DAEMON keys show a_$a -a --home $DAEMON_HOME-1 --keyring-backend test) 1000000umee,10000atom,20000juno
     done
 fi
 
