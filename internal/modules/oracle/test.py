@@ -167,7 +167,8 @@ class TestOracleModule(unittest.TestCase):
         self.assertTrue(status)
 
     # test_high_voting_load spams the nodes with pre-votes and votes,
-    # then verifies voting is avilable next voting period
+    # make sure we have node uptime
+    # by attempting to vote again
     def test_high_voting_load(self):
         vote_hash = get_hash(EXCHANGE_RATES.ToString(), STATIC_SALT, validator2_val['address'])
         for i in range(30):
