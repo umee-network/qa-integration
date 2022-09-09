@@ -1,8 +1,10 @@
+import time
 from utils import exec_command, env
 
 DAEMON = env.DAEMON
 RPC = env.RPC
 CHAINID = env.CHAINID
+BLOCKS_PER_VOTING_PERIOD = 5
 
 # query_exchange_rates queries the prices of all exchange rates
 def query_exchange_rates():
@@ -49,3 +51,17 @@ def query_feeder_delegation(valAddress):
 def node_status():
     command = f"{DAEMON} status --node {RPC}"
     return exec_command(command)
+
+def get_block_height():
+    _, message = node_status()
+    return message["SyncInfo"]["latest_block_height"]
+
+def blocks_until_next_voting_period(block_height):
+    vp_block_height = (block_height % BLOCKS_PER_VOTING_PERIOD)
+    return BLOCKS_PER_VOTING_PERIOD - vp_block_height
+
+def wait_for_next_voting_period(block_height=None):
+    block_height = block_height or int(get_block_height())
+    blocks = blocks_until_next_voting_period(block_height)
+    if blocks < 5:
+        time.sleep(blocks / 2)

@@ -15,19 +15,20 @@ cd $CURPATH
 . $CURPATH/helpers/services.sh
 . $CURPATH/helpers/pid_control.sh
 
-FILES_EXISTS="true"
-
-echo "NUM_VALS: $NUM_VALS"
-
-# checking simd-* service files exist or not
+echo "INFO: Number of validator nodes to be shutdown and disabled: $NUM_VALS"
 for (( a=1; a<=$NUM_VALS; a++ ))
 do
-    if [ ! -f "/lib/systemd/system/$DAEMON-${a}.service" ]; then
-        FILES_EXISTS="false"
-        break
+    if command_exists systemctl ; then
+        stop_service $DAEMON-${a}
+        stop_service $DAEMON-${a}-pf
+        continue
     fi
+
+    kill_process $DAEMON_HOME-${a}/pid.${DAEMON}
+    kill_process $DAEMON_HOME-${a}/pid.pf
 done
 
+<<<<<<< HEAD
 if [ $FILES_EXISTS == "true" ]; then
     echo "INFO: Number of validator nodes to be shutdown and disabled: $NUM_VALS"
     for (( a=1; a<=$NUM_VALS; a++ ))
@@ -45,19 +46,23 @@ if [ $FILES_EXISTS == "true" ]; then
     echo "------- Running unsafe reset all ---------"
     for (( a=1; a<=$NUM_VALS; a++ ))
     do
+=======
+echo "------- Running unsafe reset all ---------"
+for (( a=1; a<=$NUM_VALS; a++ ))
+do
+    if command_exists $DAEMON ; then
+>>>>>>> 9bd5ab7 (Squashed last 9 commits since large go.19 tar was accidently commited in)
         $DAEMON tendermint unsafe-reset-all  --home $DAEMON_HOME-$a
-        rm -rf $DAEMON_HOME-$a
         echo "-- Executed $DAEMON unsafe-reset-all  --home $DAEMON_HOME-$a --"
-    done
-
-    if command_exists systemctl ; then
-        echo "---------- Disabling systemd process files --------"
-        for (( a=1; a<=$NUM_VALS; a++ ))
-        do
-            disable_service $DAEMON-${a}
-            disable_service $DAEMON-${a}-pf
-        done
     fi
-else
-    echo "----No simd services running-----"
+    rm -rf $DAEMON_HOME-$a
+done
+
+if command_exists systemctl ; then
+    echo "---------- Disabling systemd process files --------"
+    for (( a=1; a<=$NUM_VALS; a++ ))
+    do
+        disable_service $DAEMON-${a}
+        disable_service $DAEMON-${a}-pf
+    done
 fi

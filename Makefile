@@ -7,7 +7,17 @@ lint: install-deps
 	PYTHONPATH=./internal pylint ./internal
 
 setup-chain: install-deps stop-chain
-	@bash ./scripts/chain/start_chain.sh
+	@bash ./scripts/chain/start_chain.sh 5
+	@echo "Waiting for chain to start..."
+	@sleep 7
+
+setup-chain-no-pf: install-deps stop-chain
+	@bash ./scripts/chain/start_chain.sh 3 false
+	@echo "Waiting for chain to start..."
+	@sleep 7
+
+setup-chain-no-pf-create-ibc-accs: install-deps stop-chain
+	@bash ./scripts/chain/start_chain.sh 3 false true
 	@echo "Waiting for chain to start..."
 	@sleep 7
 
@@ -59,7 +69,7 @@ test-send-load: setup-chain
 	TEST_TYPE=send-load bash ./scripts/tests/send_load.sh
 	$(MAKE) stop-chain
 
-test-leverage-module: setup-chain
+test-leverage-module: setup-chain-no-pf-create-ibc-accs
 	@echo "Running leverage module tests..."
 	TEST_TYPE=leverage-module bash ./scripts/tests/leverage_module.sh
 	$(MAKE) stop-chain

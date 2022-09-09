@@ -17,9 +17,9 @@
       "enable_msg_supply": true,
       "enable_msg_borrow": true,
       "blacklist": false,
-      "max_collateral_share": "0.100000000000000000",
+      "max_collateral_share": "1.000000000000000000",
       "max_supply_utilization": "0.500000000000000000",
-      "min_collateral_liquidity": "0.750000000000000000"
+      "min_collateral_liquidity": "0.000000000000000000"
     },
     {
       "base_denom": "ibc/atom",
@@ -36,9 +36,9 @@
       "enable_msg_supply": true,
       "enable_msg_borrow": true,
       "blacklist": false,
-      "max_collateral_share": "0.100000000000000000",
+      "max_collateral_share": "1.000000000000000000",
       "max_supply_utilization": "0.500000000000000000",
-      "min_collateral_liquidity": "0.750000000000000000"
+      "min_collateral_liquidity": "0.000000000000000000"
     },
     {
       "base_denom": "ibc/juno",
@@ -55,9 +55,9 @@
       "enable_msg_supply": true,
       "enable_msg_borrow": true,
       "blacklist": false,
-      "max_collateral_share": "0.100000000000000000",
+      "max_collateral_share": "1.000000000000000000",
       "max_supply_utilization": "0.500000000000000000",
-      "min_collateral_liquidity": "0.750000000000000000"
+      "min_collateral_liquidity": "0.000000000000000000"
     }
   ]
 }

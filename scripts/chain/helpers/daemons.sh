@@ -36,10 +36,21 @@ start_umeed() {
 start_price_feeder() {
   VAL_NUM=$1
 
+<<<<<<< HEAD
   # Setup delegated price-feeder account
   ACCT_NUM=$(($VAL_NUM + 2))
   ACCT_ADDR=$($DAEMON keys show account$ACCT_NUM -a --home $DAEMON_HOME-1 --keyring-backend test)
   $DAEMON tx oracle delegate-feed-consent validator$VAL_NUM $ACCT_ADDR --keyring-backend test --from $alidator$VAL_NUM \
+=======
+  DIFF=$(($VAL_NUM - 1))
+  INC=$(($DIFF * 2))
+  RPC=$((16657 + $INC))
+
+  # Setup delegated price-feeder account
+  ACCT_NUM=$(($VAL_NUM + 2))
+  ACCT_ADDR=$($DAEMON keys show account$ACCT_NUM -a --home $DAEMON_HOME-1 --keyring-backend test)
+  $DAEMON tx oracle delegate-feed-consent validator$VAL_NUM $ACCT_ADDR --keyring-backend test \
+>>>>>>> 9bd5ab7 (Squashed last 9 commits since large go.19 tar was accidently commited in)
     --chain-id $CHAINID --home $DAEMON_HOME-$VAL_NUM --gas 2000000 --node tcp://localhost:${RPC} -y
 
   if command_exists systemctl ; then

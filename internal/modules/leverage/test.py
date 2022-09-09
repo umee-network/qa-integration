@@ -60,8 +60,8 @@ validator1_acc = keys_show("validator1", "val")[1]
 validator2_val = keys_show("validator2", "val", validator2_home)[1]
 
 accounts = []
-for i in range(env.NUM_ACCOUNTS):
-    acc = keys_show("account" + str(i+1))[1]
+for i in range(1, 1001):
+    acc = keys_show("a_" + str(i))[1]
     accounts.append(acc)
 
 def get_block_height():
@@ -74,28 +74,36 @@ def wait_for_next_voting_period():
     if vp_block_height > 0:
         time.sleep((BLOCKS_PER_VOTING_PERIOD - vp_block_height) / 2)
 
+
 class TestLeverageModuleTxsQueries(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         update_registry_path = pathlib.Path().resolve().joinpath("./internal/modules/leverage/update-token-registry.json")
         submit_and_pass_proposal(
             proposal_file_or_name=update_registry_path,
-            proposal_type='update-registry'
+            proposal_type='update-registry',
+            extra_args='200uumee'
         )
         time.sleep(20)
 
-    def exchange_rate_set(self, exchange_rates, stop):
+    def setUp(self):
+        self.stop_exchange_rate_set = False
+
+    def tearDown(self):
+        self.stop_exchange_rate_set = True
+        
+    def exchange_rate_set(self, exchange_rates):
         while True:
             # Get Hash
             vote_hash = get_hash(exchange_rates.ToString(), STATIC_SALT, validator2_val["address"])
 
-            wait_for_next_voting_period()
-
+            # wait_for_next_voting_period()
+            
             # Submit prevote
             status, prevote_1 = tx_submit_prevote(validator2_val["name"], vote_hash, validator2_home)
             self.assertTrue(status)
 
-            time.sleep(1.5) # Wait until next voting period
+            time.sleep(1.5)
 
             # Submit vote
             status, vote_1 = tx_submit_vote(validator2_val["name"], STATIC_SALT, validator2_home, exchange_rates.ToString())
@@ -110,7 +118,7 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
             for rate in vote_1["aggregate_vote"]["exchange_rate_tuples"]:
                 self.assertEqual(float(rate["exchange_rate"]), float(exchange_rates.GetRate(rate["denom"])))
 
-            if stop():
+            if self.stop_exchange_rate_set:
                 break
 
     def assert_equal_balances(self, acc_balance, denom_amounts):
@@ -129,6 +137,14 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
     def batch_borrow(self, first_account, last_account, amount, validator_home):
         for i in range(first_account, last_account):
             status = tx_borrow(accounts[i]["name"], amount, validator_home)
+<<<<<<< HEAD
+=======
+            self.assertTrue(status)
+
+    def batch_liquidate(self, first_account, last_account, amount, reward_denom, validator_home):
+        for i in range(first_account, last_account):
+            status = tx_liquidate(accounts[i]["name"], accounts[i]["name"], amount, reward_denom, validator_home)
+>>>>>>> 9bd5ab7 (Squashed last 9 commits since large go.19 tar was accidently commited in)
             self.assertTrue(status)
 
     def supply_or_withdraw(self):
@@ -155,7 +171,6 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         # User A supplies between 10% and 90% of their uumee balance
         status = tx_supply(accounts[0]["name"], "500000000000uumee", validator1_home)
         self.assertTrue(status)
-        time.sleep(2)
 
         # Query User A bank balance of u/uumee
         status, acc1_balance = query_balances(accounts[0]["address"])
@@ -166,7 +181,6 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         # User A withdraws between 10% and 90% of their u/uumee balance
         status = tx_withdraw(accounts[0]["name"], "500000000000u/uumee", validator1_home)
         self.assertTrue(status)
-        time.sleep(2)
 
         # Query User A bank balance of uumee
         status, acc1_balance = query_balances(accounts[0]["address"])
@@ -182,9 +196,8 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         self.assert_equal_balances(acc1_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'1000000000000'})
 
         # User A supplies between 10% and 90% of their atom balance
-        status = tx_supply(accounts[0]["name"], accounts[0]["address"], "5000000000ibc/atom", validator1_home)
+        status = tx_supply(accounts[0]["name"], "5000000000ibc/atom", validator1_home)
         self.assertTrue(status)
-        time.sleep(2)
 
         # Query User A bank balance of u/ibc/atom
         status, acc1_balance = query_balances(accounts[0]["address"])
@@ -195,7 +208,6 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         # User A withdraws between 10% and 90% of their u/ibc/atom balance
         status = tx_withdraw(accounts[0]["name"], "5000000000u/ibc/atom", validator1_home)
         self.assertTrue(status)
-        time.sleep(2)
 
         # Query User A bank balance of atom
         status, acc1_balance = query_balances(accounts[0]["address"])
@@ -205,10 +217,10 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
 
     def test_simple_functional(self):
         # Submit exhange rates to price feeder every voting period in the background
-        stop_exchange_rate_set = False
-        exchange_rate_set_thread = threading.Thread(target=self.exchange_rate_set, args=(EXCHANGE_RATES, lambda : stop_exchange_rate_set))
-        exchange_rate_set_thread.start()
+        exchange_rate_set_thread = threading.Thread(target=self.exchange_rate_set, args=(EXCHANGE_RATES, ))
         wait_for_next_voting_period()
+        exchange_rate_set_thread.start()
+        time.sleep(5)
 
         # Query User A and User B bank balance
         status, acc1_balance = query_balances(accounts[0]["address"])
@@ -223,15 +235,16 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         # User A supplies and collaterlizes 10000 umee
         status = tx_supply(accounts[0]["name"], "10000000000uumee", validator1_home)
         self.assertTrue(status)
+<<<<<<< HEAD
         time.sleep(2)
+=======
+>>>>>>> 9bd5ab7 (Squashed last 9 commits since large go.19 tar was accidently commited in)
         status = tx_collateralize(accounts[0]["name"], "10000000000u/uumee", validator1_home)
         self.assertTrue(status)
-        time.sleep(2)
 
         # User B supplies 2 atom
         status = tx_supply(accounts[1]["name"], "2000000ibc/atom", validator1_home)
         self.assertTrue(status)
-        time.sleep(2)
 
         status, acc1_balance = query_balances(accounts[0]["address"])
         self.assertTrue(status)
@@ -245,12 +258,10 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         # User A borrows 1 atom
         status = tx_borrow(accounts[0]["name"], "1000000ibc/atom", validator1_home)
         self.assertTrue(status)
-        time.sleep(2)
 
         # User B withdraws 1 atom
         status = tx_withdraw(accounts[1]["name"], "1000000u/ibc/atom", validator1_home)
         self.assertTrue(status)
-        time.sleep(2)
 
         status, acc1_balance = query_balances(accounts[0]["address"])
         self.assertTrue(status)
@@ -264,19 +275,18 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         # User A pays back 1 atom
         status = tx_repay(accounts[0]["name"], "1000000ibc/atom", validator1_home)
         self.assertTrue(status)
-        time.sleep(2)
 
         status, acc1_balance = query_balances(accounts[0]["address"])
         self.assertTrue(status)
         print("\nAcc1 balances after repaying 1 atom: ", acc1_balance["balances"])
         self.assert_equal_balances(acc1_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'990000000000'})
-        status, acc2_balance = query_balances(accounts[0]["address"])
+        status, acc2_balance = query_balances(accounts[1]["address"])
         self.assertTrue(status)
         print("\nAcc2 balances after acc1 repaid 1 atom: ", acc2_balance["balances"])
         self.assert_equal_balances(acc2_balance, {'ibc/atom':'9999000000','ibc/juno':'20000000000','u/ibc/atom':'1000000','uumee':'1000000000000'})
 
         # Stop exhange rate setting thread
-        stop_exchange_rate_set = True
+        self.stop_exchange_rate_set = True
         exchange_rate_set_thread.join()
 
     # def test_supply_or_withdraw(self):
@@ -285,7 +295,7 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
     # def test_functional_one(self):
     #     # Submit exhange rates to price feeder every voting period in the background
     #     stop_exchange_rate_set = False
-    #     exchange_rate_set_thread = threading.Thread(target=self.exchange_rate_set, args=(EXCHANGE_RATES, lambda : stop_exchange_rate_set))
+    #     exchange_rate_set_thread = threading.Thread(target=self.exchange_rate_set, args=(EXCHANGE_RATES, ))
     #     exchange_rate_set_thread.start()
     #     wait_for_next_voting_period()
 
@@ -348,11 +358,20 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
 
     #     # Price of atom grows to 2 usd, price of juno grows to 0.7 usd. Restart exchange rate setting with new rates.
     #     stop_exchange_rate_set = False
-    #     exchange_rate_set_thread = threading.Thread(target=self.exchange_rate_set, args=(UPDATED_EXCHANGE_RATES, lambda : stop_exchange_rate_set))
+    #     exchange_rate_set_thread = threading.Thread(target=self.exchange_rate_set, args=(UPDATED_EXCHANGE_RATES, ))
     #     exchange_rate_set_thread.start()
     #     wait_for_next_voting_period()
 
     #     # Liquidate whatever possible in parallel
+    #     t1 = threading.Thread(target=self.batch_borrow, args=(20, 39, "1000000000uumee", "uumee", validator1_home))
+    #     t2 = threading.Thread(target=self.batch_borrow, args=(40, 59, "1000000000uumee", "uumee", validator1_home))
+    #     t3 = threading.Thread(target=self.batch_borrow, args=(60, 99, "1000000000uumee", "uumee", validator1_home))
+    #     t1.start()
+    #     t2.start()
+    #     t3.start()
+    #     t1.join()
+    #     t2.join()
+    #     t3.join()
 
     #     # Stop exhange rate setting thread
     #     stop_exchange_rate_set = True
@@ -361,7 +380,7 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
     # def test_functional_two(self):
     #     # Submit exhange rates to price feeder every voting period in the background
     #     stop_exchange_rate_set = False
-    #     exchange_rate_set_thread = threading.Thread(target=self.exchange_rate_set, args=(EXCHANGE_RATES, lambda : stop_exchange_rate_set))
+    #     exchange_rate_set_thread = threading.Thread(target=self.exchange_rate_set, args=(EXCHANGE_RATES, ))
     #     exchange_rate_set_thread.start()
     #     wait_for_next_voting_period()
 
@@ -428,7 +447,7 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
 
     #     # Price of atom grows to 2 usd, price of juno grows to 0.7 usd. Restart exchange rate setting with new rates.
     #     stop_exchange_rate_set = False
-    #     exchange_rate_set_thread = threading.Thread(target=self.exchange_rate_set, args=(UPDATED_EXCHANGE_RATES, lambda : stop_exchange_rate_set))
+    #     exchange_rate_set_thread = threading.Thread(target=self.exchange_rate_set, args=(UPDATED_EXCHANGE_RATES, ))
     #     exchange_rate_set_thread.start()
     #     wait_for_next_voting_period()
 
