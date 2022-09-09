@@ -63,5 +63,5 @@ def blocks_until_next_voting_period(block_height):
 def wait_for_next_voting_period(block_height=None):
     block_height = block_height or int(get_block_height())
     blocks = blocks_until_next_voting_period(block_height)
-    if blocks < 5:
+    if blocks < 10:
         time.sleep(blocks / 2)
