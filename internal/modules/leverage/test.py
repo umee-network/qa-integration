@@ -140,6 +140,7 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         self.assertTrue(status)
         self.assertTrue(len(res['registry']) == 3, "It should have three tokens registered")
 
+    # GH Issue: https://github.com/umee-network/umee/issues/1307
     def test_supply_withdraw(self):
         # Query User A bank balance of uumee
         status, acc1_balance = query_balances(accounts[0]["address"])
@@ -194,6 +195,7 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         print("\nAcc1 balances after withdrawing 5000 u/atom: ", acc1_balance["balances"])
         self.assert_equal_balances(acc1_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'1000000000000'})
 
+    # GH Issue: https://github.com/umee-network/umee/issues/1210
     def test_simple_functional(self):
         # Submit exhange rates to price feeder every voting period in the background
         exchange_rate_set_thread1 = threading.Thread(target=self.exchange_rate_set, args=(EXCHANGE_RATES, validator1_val, validator1_home))
@@ -269,174 +271,6 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         exchange_rate_set_thread1.join()
         exchange_rate_set_thread2.join()
         exchange_rate_set_thread3.join()
-
-    # def test_supply_or_withdraw(self):
-
-
-    # def test_functional_one(self):
-    #     # Submit exhange rates to price feeder every voting period in the background
-    #     stop_exchange_rate_set = False
-    #     exchange_rate_set_thread = threading.Thread(target=self.exchange_rate_set, args=(EXCHANGE_RATES, ))
-    #     exchange_rate_set_thread.start()
-    #     wait_for_next_voting_period()
-
-    #     # account1, ..., account50 supply and collateralize 10000 umee
-    #     for i in range(50):
-    #         status = tx_supply(accounts[i]["name"], "10000000000uumee", validator1_home)
-    #         self.assertTrue(status)
-    #         status = tx_collateralize(accounts[i]["name"], "10000000000u/uumee", validator1_home)
-    #         self.assertTrue(status)
-
-    #     # account51, ..., account100 supply and collateralize 1000 umee
-    #     for i in range(50,99):
-    #         status = tx_supply(accounts[i]["name"], "1000000000uumee", validator1_home)
-    #         self.assertTrue(status)
-    #         status = tx_collateralize(accounts[i]["name"], "1000000000u/uumee", validator1_home)
-    #         self.assertTrue(status)
-
-    #     # account101, ..., account200 supply and collateralize 10000 atom and 200 juno
-    #     for i in range(100,199):
-    #         status = tx_supply(accounts[i]["name"], "1000000000ibc/atom", validator1_home)
-    #         self.assertTrue(status)
-    #         status = tx_collateralize(accounts[i]["name"], "1000000000u/ibc/atom", validator1_home)
-    #         self.assertTrue(status)
-    #         status = tx_supply(accounts[i]["name"], "200000000ibc/juno", validator1_home)
-    #         self.assertTrue(status)
-    #         status = tx_collateralize(accounts[i]["name"], "200000000u/ibc/juno", validator1_home)
-    #         self.assertTrue(status)
-
-    #     time.sleep(10)
-
-    #     # Once the transactions above are done, in parallel, every 1min, 9 times in total,
-    #     # acount51, ..., account100 supply and collateralize 1000 umee
-    #     supply_amount = "1000000000uumee"
-    #     collateralize_amount = "1000000000u/uumee"
-    #     for _ in range(8):
-    #         for i in range(50,99):
-    #             t = threading.Thread(target=self.supply_and_collateralize,
-    #             args=(accounts[i]["name"], supply_amount, collateralize_amount, validator1_home))
-    #             t.start()
-    #         time.sleep(60)
-
-    #     # In parallel, account1, ..., account20 borrow 10 atom, account21, ..., account40 borrow 100 atom,
-    #     # account41, ..., account60 borrow 150 atom, account61, ..., account100 borrow 300 juno
-    #     t1 = threading.Thread(target=self.batch_borrow, args=(0, 19, "10000000ibc/atom", validator1_home))
-    #     t2 = threading.Thread(target=self.batch_borrow, args=(20, 39, "100000000ibc/atom", validator1_home))
-    #     t3 = threading.Thread(target=self.batch_borrow, args=(40, 59, "150000000ibc/atom", validator1_home))
-    #     t4 = threading.Thread(target=self.batch_borrow, args=(60, 99, "300000000ibc/juno", validator1_home))
-    #     t1.start()
-    #     t2.start()
-    #     t3.start()
-    #     t4.start()
-    #     t1.join()
-    #     t2.join()
-    #     t3.join()
-    #     t4.join()
-
-    #     # Stop exhange rate setting thread
-    #     stop_exchange_rate_set = True
-    #     exchange_rate_set_thread.join()
-
-    #     # Price of atom grows to 2 usd, price of juno grows to 0.7 usd. Restart exchange rate setting with new rates.
-    #     stop_exchange_rate_set = False
-    #     exchange_rate_set_thread = threading.Thread(target=self.exchange_rate_set, args=(UPDATED_EXCHANGE_RATES, ))
-    #     exchange_rate_set_thread.start()
-    #     wait_for_next_voting_period()
-
-    #     # Liquidate whatever possible in parallel
-    #     t1 = threading.Thread(target=self.batch_borrow, args=(20, 39, "1000000000uumee", "uumee", validator1_home))
-    #     t2 = threading.Thread(target=self.batch_borrow, args=(40, 59, "1000000000uumee", "uumee", validator1_home))
-    #     t3 = threading.Thread(target=self.batch_borrow, args=(60, 99, "1000000000uumee", "uumee", validator1_home))
-    #     t1.start()
-    #     t2.start()
-    #     t3.start()
-    #     t1.join()
-    #     t2.join()
-    #     t3.join()
-
-    #     # Stop exhange rate setting thread
-    #     stop_exchange_rate_set = True
-    #     exchange_rate_set_thread.join()
-
-    # def test_functional_two(self):
-    #     # Submit exhange rates to price feeder every voting period in the background
-    #     stop_exchange_rate_set = False
-    #     exchange_rate_set_thread = threading.Thread(target=self.exchange_rate_set, args=(EXCHANGE_RATES, ))
-    #     exchange_rate_set_thread.start()
-    #     wait_for_next_voting_period()
-
-    #     # account1, ..., account50 supply and collateralize 10000 umee
-    #     for i in range(50):
-    #         status = tx_supply(accounts[i]["name"], "10000000000uumee", validator1_home)
-    #         self.assertTrue(status)
-    #         status = tx_collateralize(accounts[i]["name"], "10000000000u/uumee", validator1_home)
-    #         self.assertTrue(status)
-
-    #     # account51, ..., account100 supply and collateralize 1000 umee
-    #     for i in range(50,99):
-    #         status = tx_supply(accounts[i]["name"], "1000000000uumee", validator1_home)
-    #         self.assertTrue(status)
-    #         status = tx_collateralize(accounts[i]["name"], "1000000000u/uumee", validator1_home)
-    #         self.assertTrue(status)
-
-    #     # account101, ..., account200 supply and collateralize 10000 atom and 200 juno
-    #     for i in range(100,199):
-    #         status = tx_supply(accounts[i]["name"], "1000000000ibc/atom", validator1_home)
-    #         self.assertTrue(status)
-    #         status = tx_collateralize(accounts[i]["name"], "1000000000u/ibc/atom", validator1_home)
-    #         self.assertTrue(status)
-    #         status = tx_supply(accounts[i]["name"], "200000000ibc/juno", validator1_home)
-    #         self.assertTrue(status)
-    #         status = tx_collateralize(accounts[i]["name"], "200000000u/ibc/juno", validator1_home)
-    #         self.assertTrue(status)
-
-    #     time.sleep(10)
-
-    #     # Once the transactions above are done, in parallel, every 1min, 9 times in total,
-    #     # acount51, ..., account100 supply and collateralize 1000 umee
-    #     supply_amount = "1000000000uumee"
-    #     collateralize_amount = "1000000000u/uumee"
-    #     for _ in range(8):
-    #         for i in range(50,99):
-    #             t = threading.Thread(target=self.supply_and_collateralize,
-    #             args=(accounts[i]["name"], supply_amount, collateralize_amount, validator1_home))
-    #             t.start()
-    #         time.sleep(60)
-
-    #     # In parallel, account1, ..., account20 borrow 10 atom, account21, ..., account40 borrow 100 atom,
-    #     # account41, ..., account60 borrow 150 atom, account61, ..., account100 borrow 300 juno, account101,
-    #     # ..., account 200 borrow 100 umee
-    #     t1 = threading.Thread(target=self.batch_borrow, args=(0, 19, "10000000ibc/atom", validator1_home))
-    #     t2 = threading.Thread(target=self.batch_borrow, args=(20, 39, "100000000ibc/atom", validator1_home))
-    #     t3 = threading.Thread(target=self.batch_borrow, args=(40, 59, "150000000ibc/atom", validator1_home))
-    #     t4 = threading.Thread(target=self.batch_borrow, args=(60, 99, "300000000ibc/juno", validator1_home))
-    #     t5 = threading.Thread(target=self.batch_borrow, args=(100, 199, "100000000uumee", validator1_home))
-    #     t1.start()
-    #     t2.start()
-    #     t3.start()
-    #     t4.start()
-    #     t5.start()
-    #     t1.join()
-    #     t2.join()
-    #     t3.join()
-    #     t4.join()
-    #     t5.join()
-
-    #     # Stop exhange rate setting thread
-    #     stop_exchange_rate_set = True
-    #     exchange_rate_set_thread.join()
-
-    #     # Price of atom grows to 2 usd, price of juno grows to 0.7 usd. Restart exchange rate setting with new rates.
-    #     stop_exchange_rate_set = False
-    #     exchange_rate_set_thread = threading.Thread(target=self.exchange_rate_set, args=(UPDATED_EXCHANGE_RATES, ))
-    #     exchange_rate_set_thread.start()
-    #     wait_for_next_voting_period()
-
-    #     # Liquidate whatever possible in parallel
-
-    #     # Stop exhange rate setting thread
-    #     stop_exchange_rate_set = True
-    #     exchange_rate_set_thread.join()
 
 if __name__ == "__main__":
     logging.info("INFO: running leverage module tests")

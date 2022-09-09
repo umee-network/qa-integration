@@ -26,11 +26,6 @@ setup-chain-no-pf-create-ibc-accs: install-deps stop-chain
 	@echo "Waiting for chain to start..."
 	@sleep 7
 
-setup-chain-no-pf: install-deps stop-chain
-	@bash ./scripts/chain/start_chain.sh false
-	@echo "Waiting for chain to start..."
-	@sleep 7
-
 pause-chain:
 	@bash ./scripts/chain/pause_nodes.sh
 

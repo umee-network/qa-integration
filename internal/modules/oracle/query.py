@@ -4,7 +4,7 @@ from utils import exec_command, env
 DAEMON = env.DAEMON
 RPC = env.RPC
 CHAINID = env.CHAINID
-BLOCKS_PER_VOTING_PERIOD = 5
+BLOCKS_PER_VOTING_PERIOD = 10
 
 # query_exchange_rates queries the prices of all exchange rates
 def query_exchange_rates():
