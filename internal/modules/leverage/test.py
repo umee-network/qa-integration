@@ -72,7 +72,7 @@ def wait_for_next_voting_period():
     block_height = int(get_block_height())
     vp_block_height = (block_height % BLOCKS_PER_VOTING_PERIOD)
     if vp_block_height > 0:
-        time.sleep((BLOCKS_PER_VOTING_PERIOD - vp_block_height) / 2)
+        time.sleep((BLOCKS_PER_VOTING_PERIOD - vp_block_height)/2)
 
 
 class TestLeverageModuleTxsQueries(unittest.TestCase):
@@ -94,30 +94,40 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         
     def exchange_rate_set(self, exchange_rates):
         while True:
+            start_time = time.time()
+
             # Get Hash
             vote_hash = get_hash(exchange_rates.ToString(), STATIC_SALT, validator2_val["address"])
 
-            # wait_for_next_voting_period()
-            
             # Submit prevote
+            time.sleep(1)
             status, prevote_1 = tx_submit_prevote(validator2_val["name"], vote_hash, validator2_home)
             self.assertTrue(status)
-
-            time.sleep(1.5)
-
+            print("prevote: ", time.time() - start_time)
+            
             # Submit vote
             status, vote_1 = tx_submit_vote(validator2_val["name"], STATIC_SALT, validator2_home, exchange_rates.ToString())
             self.assertTrue(status)
+            print("vote: ", time.time() - start_time)
 
             # Query votes to make sure they exist, and are correct
             status, vote_1 = query_aggregate_vote(validator2_val["address"])
             self.assertTrue(status)
+            print("query: ", time.time() - start_time)
 
             self.assertEqual(len(vote_1["aggregate_vote"]["exchange_rate_tuples"]), exchange_rates.Len())
 
             for rate in vote_1["aggregate_vote"]["exchange_rate_tuples"]:
                 self.assertEqual(float(rate["exchange_rate"]), float(exchange_rates.GetRate(rate["denom"])))
 
+            while True:
+                block_height = int(get_block_height())
+                vp_block_height = (block_height % BLOCKS_PER_VOTING_PERIOD)
+                print("vp_block_height:", vp_block_height)
+                if vp_block_height == 0:
+                    break
+
+            print("time_till_next_voting_period: ", time.time() - start_time)
             if self.stop_exchange_rate_set:
                 break
 
@@ -137,14 +147,6 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
     def batch_borrow(self, first_account, last_account, amount, validator_home):
         for i in range(first_account, last_account):
             status = tx_borrow(accounts[i]["name"], amount, validator_home)
-<<<<<<< HEAD
-=======
-            self.assertTrue(status)
-
-    def batch_liquidate(self, first_account, last_account, amount, reward_denom, validator_home):
-        for i in range(first_account, last_account):
-            status = tx_liquidate(accounts[i]["name"], accounts[i]["name"], amount, reward_denom, validator_home)
->>>>>>> 9bd5ab7 (Squashed last 9 commits since large go.19 tar was accidently commited in)
             self.assertTrue(status)
 
     def supply_or_withdraw(self):
@@ -217,10 +219,17 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
 
     def test_simple_functional(self):
         # Submit exhange rates to price feeder every voting period in the background
-        exchange_rate_set_thread = threading.Thread(target=self.exchange_rate_set, args=(EXCHANGE_RATES, ))
-        wait_for_next_voting_period()
-        exchange_rate_set_thread.start()
-        time.sleep(5)
+        # exchange_rate_set_thread = threading.Thread(target=self.exchange_rate_set, args=(EXCHANGE_RATES, ))
+        # start_time = time.time()
+        # while True:
+        #     block_height = int(get_block_height())
+        #     vp_block_height = (block_height % BLOCKS_PER_VOTING_PERIOD)
+        #     print("vp_block_height:", vp_block_height)
+        #     if vp_block_height == 0:
+        #         break
+        # print("wait_for_next_voting_period: ", time.time() - start_time)
+        # exchange_rate_set_thread.start()
+        # time.sleep(5)
 
         # Query User A and User B bank balance
         status, acc1_balance = query_balances(accounts[0]["address"])
@@ -235,10 +244,7 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         # User A supplies and collaterlizes 10000 umee
         status = tx_supply(accounts[0]["name"], "10000000000uumee", validator1_home)
         self.assertTrue(status)
-<<<<<<< HEAD
-        time.sleep(2)
-=======
->>>>>>> 9bd5ab7 (Squashed last 9 commits since large go.19 tar was accidently commited in)
+
         status = tx_collateralize(accounts[0]["name"], "10000000000u/uumee", validator1_home)
         self.assertTrue(status)
 
@@ -286,8 +292,8 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         self.assert_equal_balances(acc2_balance, {'ibc/atom':'9999000000','ibc/juno':'20000000000','u/ibc/atom':'1000000','uumee':'1000000000000'})
 
         # Stop exhange rate setting thread
-        self.stop_exchange_rate_set = True
-        exchange_rate_set_thread.join()
+        # self.stop_exchange_rate_set = True
+        # exchange_rate_set_thread.join()
 
     # def test_supply_or_withdraw(self):
 

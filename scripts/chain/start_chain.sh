@@ -21,15 +21,12 @@ cd $CURPATH
 # load daemons funcs
 . $CURPATH/helpers/daemons.sh
 
-<<<<<<< HEAD
-ENABLE_PRICE_FEEDER=${1:-true}
-=======
+
 # NUM_ACCOUNTS represents number of accounts to initialize while bootstropping the chain.
 # These are the additional accounts along with the validator accounts.
 NUM_ACCOUNTS=$1
 ENABLE_PRICE_FEEDER=${2:-true}
 CREATE_IBC_ACCOUNTS=${3:-false}
->>>>>>> 9bd5ab7 (Squashed last 9 commits since large go.19 tar was accidently commited in)
 
 echo "INFO: Setting up $NUM_VALS validator nodes and $NUM_ACCOUNTS accounts"
 echo "Price Feeder Enabled: ${ENABLE_PRICE_FEEDER}"
@@ -145,8 +142,6 @@ else
     for (( a=1; a<=$NUM_ACCOUNTS; a++ ))
     do
         $DAEMON --home $DAEMON_HOME-1 add-genesis-account $($DAEMON keys show account$a -a --home $DAEMON_HOME-1 --keyring-backend test) 1000000000000$DENOM
-<<<<<<< HEAD
-=======
     done
 fi
 
@@ -156,7 +151,6 @@ if $CREATE_IBC_ACCOUNTS; then
     do
         $DAEMON keys add "a_${a}" --keyring-backend test --home $DAEMON_HOME-1
         $DAEMON --home $DAEMON_HOME-1 add-genesis-account $($DAEMON keys show a_$a -a --home $DAEMON_HOME-1 --keyring-backend test) 1000000000000$DENOM,10000000000ibc/atom,20000000000ibc/juno
->>>>>>> 9bd5ab7 (Squashed last 9 commits since large go.19 tar was accidently commited in)
     done
 fi
 

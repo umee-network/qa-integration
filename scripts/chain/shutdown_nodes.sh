@@ -28,30 +28,10 @@ do
     kill_process $DAEMON_HOME-${a}/pid.pf
 done
 
-<<<<<<< HEAD
-if [ $FILES_EXISTS == "true" ]; then
-    echo "INFO: Number of validator nodes to be shutdown and disabled: $NUM_VALS"
-    for (( a=1; a<=$NUM_VALS; a++ ))
-    do
-        if command_exists systemctl ; then
-            stop_service $DAEMON-${a}
-            stop_service $DAEMON-${a}-pf
-            continue
-        fi
-
-        kill_process $DAEMON_HOME-${a}/pid.${DAEMON}
-        kill_process $DAEMON_HOME-${a}/pid.pf
-    done
-
-    echo "------- Running unsafe reset all ---------"
-    for (( a=1; a<=$NUM_VALS; a++ ))
-    do
-=======
 echo "------- Running unsafe reset all ---------"
 for (( a=1; a<=$NUM_VALS; a++ ))
 do
     if command_exists $DAEMON ; then
->>>>>>> 9bd5ab7 (Squashed last 9 commits since large go.19 tar was accidently commited in)
         $DAEMON tendermint unsafe-reset-all  --home $DAEMON_HOME-$a
         echo "-- Executed $DAEMON unsafe-reset-all  --home $DAEMON_HOME-$a --"
     fi
