@@ -32,7 +32,8 @@ from modules.oracle.hash import (
 
 from modules.oracle.rates import (
     ExchangeRates,
-    ExchangeRate
+    ExchangeRate,
+    median_rates,
 )
 
 logging.basicConfig(format="%(message)s", level=logging.DEBUG)
@@ -132,7 +133,7 @@ class TestOracleModule(unittest.TestCase):
             {'home': validator2_home, 'name': validator2_val['name'], 'address': validator2_val['address']},
             {'home': validator3_home, 'name': validator3_val['name'], 'address': validator3_val['address']},
         ]
-        exchange_rates = [
+        exchange_rates_set = [
             ExchangeRates(ExchangeRate("UMEE", "0.01"), ExchangeRate("ATOM", "1.00"), ExchangeRate("JUNO", "1.50")),
             ExchangeRates(ExchangeRate("UMEE", "0.05"), ExchangeRate("ATOM", "50.00"), ExchangeRate("JUNO", "2.50")),
             ExchangeRates(ExchangeRate("UMEE", "20.00"), ExchangeRate("ATOM", "3.00"), ExchangeRate("JUNO", "69.99")),
@@ -141,16 +142,16 @@ class TestOracleModule(unittest.TestCase):
         with concurrent.futures.ThreadPoolExecutor(3) as executor:
             futures = []
             for i in range(3):
-                futures.append(executor.submit(tx_send_prevote_and_vote, validators[i], exchange_rates[i]))
+                futures.append(executor.submit(tx_send_prevote_and_vote, validators[i], exchange_rates_set[i]))
             for future in concurrent.futures.as_completed(futures):
                 status, response = future.result()
                 self.assertTrue(status)
         wait_for_next_voting_period(int(response['height']))
         status, new_rates = query_exchange_rates()
         self.assertTrue(status)
-        expected_rates = { 'ATOM': '3.0', 'JUNO': '2.5', 'UMEE': '0.05' }
+        expected_rates = median_rates(exchange_rates_set)
         for rate in new_rates["exchange_rates"]:
-            self.assertEqual(float(rate["amount"]), float(expected_rates[rate['denom']]))
+            self.assertEqual(float(rate["amount"]), expected_rates[rate['denom']])
 
     # test_delegate_feed_consent tests delegates feed consent from operator to delegate,
     # then submits voting from delegate on behalf of operator
