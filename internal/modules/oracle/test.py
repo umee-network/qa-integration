@@ -20,6 +20,7 @@ from modules.oracle.query import (
 )
 
 from modules.oracle.tx import (
+    STATIC_SALT,
     tx_submit_prevote,
     tx_submit_vote,
     tx_delegate_feed_consent,
@@ -43,8 +44,6 @@ EXCHANGE_RATES = ExchangeRates(
     ExchangeRate("ATOM", "1.00"),
     ExchangeRate("JUNO", "0.50"),
 )
-
-STATIC_SALT = "af8ed1e1f34ac1ac00014581cbc31f2f24480b09786ac83aabf2765dada87509"
 
 validator1_home = f"{env.DAEMON_HOME}-1"
 validator2_home = f"{env.DAEMON_HOME}-2"

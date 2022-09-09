@@ -67,5 +67,5 @@ def tx_send_prevote_and_vote(validator, exchange_rates):
     status, response = tx_submit_prevote(validator["name"], vote_hash, validator['home'])
     if not status:
         return status, response
-        wait_for_next_voting_period(int(response['height']))
+    wait_for_next_voting_period(int(response['height']))
     return tx_submit_vote(validator["name"], STATIC_SALT, validator['home'], exchange_rates.ToString())
