@@ -147,7 +147,7 @@ fi
 
 if $CREATE_IBC_ACCOUNTS; then
     echo "Adding IBC genesis accounts"
-    for (( a=1; a<=1000; a++ ))
+    for (( a=1; a<=2; a++ ))
     do
         $DAEMON keys add "a_${a}" --keyring-backend test --home $DAEMON_HOME-1
         $DAEMON --home $DAEMON_HOME-1 add-genesis-account $($DAEMON keys show a_$a -a --home $DAEMON_HOME-1 --keyring-backend test) 1000000000000$DENOM,10000000000ibc/atom,20000000000ibc/juno
@@ -178,7 +178,8 @@ jq '.app_state["gravity"]["params"]["bridge_ethereum_address"]="0x93b5122922F9dC
     | .app_state["gravity"]["params"]["bridge_active"]=false
     | .app_state["gravity"]["delegate_keys"]=[{"validator":"umeevaloper1y6xz2ggfc0pcsmyjlekh0j9pxh6hk87ymuzzdn","orchestrator":"umee1y6xz2ggfc0pcsmyjlekh0j9pxh6hk87ymc9due","eth_address":"0xfac5EC50BdfbB803f5cFc9BF0A0C2f52aDE5b6dd"},{"validator":"umeevaloper1qjehhqdnc4mevtsumk6nkhm39nqrqtcy2f5k6k","orchestrator":"umee1qjehhqdnc4mevtsumk6nkhm39nqrqtcy2dnetu","eth_address":"0x02fa1b44e2EF8436e6f35D5F56607769c658c225"},{"validator":"umeevaloper1s824eseh42ndyawx702gwcwjqn43u89dhmqdw8","orchestrator":"umee1s824eseh42ndyawx702gwcwjqn43u89dhl8zld","eth_address":"0xd8f468c1B719cc2d50eB1E3A55cFcb60e23758CD"}]
     | .app_state["gravity"]["gravity_nonces"]["latest_valset_nonce"]="0"
-    | .app_state["gravity"]["gravity_nonces"]["last_observed_nonce"]="0"' \
+    | .app_state["gravity"]["gravity_nonces"]["last_observed_nonce"]="0" 
+    | .app_state["oracle"]["params"]["vote_period"] = "10"'\
     $DAEMON_HOME-1/config/genesis.json > $DAEMON_HOME-1/config/tmp_genesis.json && mv $DAEMON_HOME-1/config/tmp_genesis.json $DAEMON_HOME-1/config/genesis.json
 sed -i -e "s/172800000000000/${EVIDENCE_AGE}/g" $DAEMON_HOME-1/config/genesis.json
 sed -i -e "s/172800s/${GOV_DEFAULT_PERIOD}/g" $DAEMON_HOME-1/config/genesis.json

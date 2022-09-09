@@ -74,7 +74,7 @@ test-send-load: setup-chain
 	TEST_TYPE=send-load bash ./scripts/tests/send_load.sh
 	$(MAKE) stop-chain
 
-test-leverage-module: setup-chain-create-ibc-accs
+test-leverage-module: setup-chain-no-pf-create-ibc-accs
 	@echo "Running leverage module tests..."
 	TEST_TYPE=leverage-module bash ./scripts/tests/leverage_module.sh
 	$(MAKE) stop-chain

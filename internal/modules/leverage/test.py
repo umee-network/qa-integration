@@ -8,8 +8,7 @@ import random
 from utils import env
 
 from internal.modules.oracle.query import (
-    query_aggregate_vote,
-    node_status,
+    query_exchange_rates,
 )
 from modules.oracle.tx import (
     tx_submit_prevote,
@@ -44,7 +43,7 @@ from modules.leverage.tx import (
     tx_repay,
 )
 
-BLOCKS_PER_VOTING_PERIOD = 5
+BLOCKS_PER_VOTING_PERIOD = 10
 STATIC_SALT = "af8ed1e1f34ac1ac00014581cbc31f2f24480b09786ac83aabf2765dada87509"
 
 from internal.core.keys import keys_show
@@ -55,25 +54,16 @@ logging.basicConfig(format="%(message)s", level=logging.DEBUG)
 
 validator1_home = f"{env.DAEMON_HOME}-1"
 validator2_home = f"{env.DAEMON_HOME}-2"
+validator3_home = f"{env.DAEMON_HOME}-3"
 
-validator1_acc = keys_show("validator1", "val")[1]
+validator1_val = keys_show("validator1", "val", validator1_home)[1]
 validator2_val = keys_show("validator2", "val", validator2_home)[1]
+validator3_val = keys_show("validator3", "val", validator3_home)[1]
 
 accounts = []
-for i in range(1, 1001):
+for i in range(1, 3):
     acc = keys_show("a_" + str(i))[1]
     accounts.append(acc)
-
-def get_block_height():
-    _, message = node_status()
-    return message["SyncInfo"]["latest_block_height"]
-
-def wait_for_next_voting_period():
-    block_height = int(get_block_height())
-    vp_block_height = (block_height % BLOCKS_PER_VOTING_PERIOD)
-    if vp_block_height > 0:
-        time.sleep((BLOCKS_PER_VOTING_PERIOD - vp_block_height)/2)
-
 
 class TestLeverageModuleTxsQueries(unittest.TestCase):
     @classmethod
@@ -92,42 +82,29 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
     def tearDown(self):
         self.stop_exchange_rate_set = True
         
-    def exchange_rate_set(self, exchange_rates):
+    def exchange_rate_set(self, exchange_rates, validator_val, validator_home):
         while True:
-            start_time = time.time()
-
             # Get Hash
-            vote_hash = get_hash(exchange_rates.ToString(), STATIC_SALT, validator2_val["address"])
+            vote_hash = get_hash(exchange_rates.ToString(), STATIC_SALT, validator_val["address"])
 
             # Submit prevote
-            time.sleep(1)
-            status, prevote_1 = tx_submit_prevote(validator2_val["name"], vote_hash, validator2_home)
-            self.assertTrue(status)
-            print("prevote: ", time.time() - start_time)
-            
-            # Submit vote
-            status, vote_1 = tx_submit_vote(validator2_val["name"], STATIC_SALT, validator2_home, exchange_rates.ToString())
-            self.assertTrue(status)
-            print("vote: ", time.time() - start_time)
-
-            # Query votes to make sure they exist, and are correct
-            status, vote_1 = query_aggregate_vote(validator2_val["address"])
-            self.assertTrue(status)
-            print("query: ", time.time() - start_time)
-
-            self.assertEqual(len(vote_1["aggregate_vote"]["exchange_rate_tuples"]), exchange_rates.Len())
-
-            for rate in vote_1["aggregate_vote"]["exchange_rate_tuples"]:
-                self.assertEqual(float(rate["exchange_rate"]), float(exchange_rates.GetRate(rate["denom"])))
-
+            i = 0
             while True:
-                block_height = int(get_block_height())
-                vp_block_height = (block_height % BLOCKS_PER_VOTING_PERIOD)
-                print("vp_block_height:", vp_block_height)
-                if vp_block_height == 0:
+                status = tx_submit_prevote(validator_val["name"], vote_hash, validator_home)
+                i += 1
+                if status or (i == 20):
+                    self.assertTrue(status)
                     break
 
-            print("time_till_next_voting_period: ", time.time() - start_time)
+            # Submit vote
+            i = 0
+            while True:
+                status = tx_submit_vote(validator_val["name"], STATIC_SALT, validator_home, exchange_rates.ToString())
+                i += 1
+                if status or (i == 20):
+                    self.assertTrue(status)
+                    break
+
             if self.stop_exchange_rate_set:
                 break
 
@@ -219,17 +196,13 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
 
     def test_simple_functional(self):
         # Submit exhange rates to price feeder every voting period in the background
-        # exchange_rate_set_thread = threading.Thread(target=self.exchange_rate_set, args=(EXCHANGE_RATES, ))
-        # start_time = time.time()
-        # while True:
-        #     block_height = int(get_block_height())
-        #     vp_block_height = (block_height % BLOCKS_PER_VOTING_PERIOD)
-        #     print("vp_block_height:", vp_block_height)
-        #     if vp_block_height == 0:
-        #         break
-        # print("wait_for_next_voting_period: ", time.time() - start_time)
-        # exchange_rate_set_thread.start()
-        # time.sleep(5)
+        exchange_rate_set_thread1 = threading.Thread(target=self.exchange_rate_set, args=(EXCHANGE_RATES, validator1_val, validator1_home))
+        exchange_rate_set_thread2 = threading.Thread(target=self.exchange_rate_set, args=(EXCHANGE_RATES, validator2_val, validator2_home))
+        exchange_rate_set_thread3 = threading.Thread(target=self.exchange_rate_set, args=(EXCHANGE_RATES, validator3_val, validator3_home))
+        exchange_rate_set_thread1.start()
+        exchange_rate_set_thread2.start()
+        exchange_rate_set_thread3.start()
+        time.sleep(10)
 
         # Query User A and User B bank balance
         status, acc1_balance = query_balances(accounts[0]["address"])
@@ -292,8 +265,10 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         self.assert_equal_balances(acc2_balance, {'ibc/atom':'9999000000','ibc/juno':'20000000000','u/ibc/atom':'1000000','uumee':'1000000000000'})
 
         # Stop exhange rate setting thread
-        # self.stop_exchange_rate_set = True
-        # exchange_rate_set_thread.join()
+        self.stop_exchange_rate_set = True
+        exchange_rate_set_thread1.join()
+        exchange_rate_set_thread2.join()
+        exchange_rate_set_thread3.join()
 
     # def test_supply_or_withdraw(self):
 
