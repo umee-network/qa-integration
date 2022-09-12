@@ -106,7 +106,7 @@ class TestOracleModule(unittest.TestCase):
         status, prevote_1 = tx_submit_prevote(validator3_val["name"], vote_hash, validator3_home)
         self.assertTrue(status)
 
-        time.sleep(1.5) # Wait until next voting period
+        time.sleep(3) # Wait until next voting period
 
         # Submit vote
         status, vote_1 = tx_submit_vote(validator3_val["name"], STATIC_SALT, validator3_home, EXCHANGE_RATES.ToString())
@@ -152,7 +152,7 @@ class TestOracleModule(unittest.TestCase):
         status, response = query_aggregate_prevote(operator_val_address)
         self.assertTrue(status)
 
-        time.sleep(1.5) # Wait until next voting period
+        time.sleep(3) # Wait until next voting period
 
         status = tx_submit_vote(
             delegate_name, 
