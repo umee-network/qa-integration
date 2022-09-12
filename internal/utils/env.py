@@ -15,6 +15,7 @@ URI = os.getenv("MONGO_URL")
 DB_NAME = os.getenv("DB_NAME", "qa_test")
 TEST_TYPE = os.getenv("TEST_TYPE", None)
 DEFAULT_GAS = int(os.getenv("DEFAULT_GAS", "2000000"))
+NUM_VALS = int(os.getenv("NUM_VALS", "3"))
 
 def get(env_var):
     return os.getenv(env_var)
