@@ -61,7 +61,7 @@ validator2_val = keys_show("validator2", "val", validator2_home)[1]
 validator3_val = keys_show("validator3", "val", validator3_home)[1]
 
 accounts = []
-for i in range(1, 3):
+for i in range(1, 201):
     acc = keys_show("a_" + str(i))[1]
     accounts.append(acc)
 
@@ -115,15 +115,24 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
             self.assertEqual(acc_balance["balances"][i]["amount"], amount)
             i+=1
 
-    def supply_and_collateralize(self, account_name, supply_amount, collateralize_amount, validator_home):
-        status = tx_supply(account_name, supply_amount, validator_home)
-        self.assertTrue(status)
-        status = tx_collateralize(account_name, collateralize_amount, validator_home)
-        self.assertTrue(status)
+    def batch_supply(self, first_account, last_account, amount, validator_home):
+        for i in range(first_account, last_account):
+            status = tx_supply(accounts[i]["name"], amount, validator_home, 'async')
+            self.assertTrue(status)
+
+    def batch_collateralize(self, first_account, last_account, amount, validator_home):
+        for i in range(first_account, last_account):
+            status = tx_collateralize(accounts[i]["name"], amount, validator_home, 'async')
+            self.assertTrue(status)
 
     def batch_borrow(self, first_account, last_account, amount, validator_home):
         for i in range(first_account, last_account):
-            status = tx_borrow(accounts[i]["name"], amount, validator_home)
+            status = tx_borrow(accounts[i]["name"], amount, validator_home, 'async')
+            self.assertTrue(status)
+
+    def batch_liquidate(self, first_account, last_account, borrower, amount, reward_denom, validator_home):
+        for i in range(first_account, last_account):
+            status = tx_liquidate(accounts[i]["name"], borrower, amount, reward_denom, validator_home, 'async')
             self.assertTrue(status)
 
     def supply_or_withdraw(self):
@@ -271,6 +280,146 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         exchange_rate_set_thread1.join()
         exchange_rate_set_thread2.join()
         exchange_rate_set_thread3.join()
+
+    # GH Issue: https://github.com/umee-network/umee/issues/1207
+    def test_functional_one(self):
+        # Submit exhange rates to price feeder every voting period in the background
+        exchange_rate_set_thread1 = threading.Thread(target=self.exchange_rate_set, args=(EXCHANGE_RATES, validator1_val, validator1_home))
+        exchange_rate_set_thread2 = threading.Thread(target=self.exchange_rate_set, args=(EXCHANGE_RATES, validator2_val, validator2_home))
+        exchange_rate_set_thread3 = threading.Thread(target=self.exchange_rate_set, args=(EXCHANGE_RATES, validator3_val, validator3_home))
+        exchange_rate_set_thread1.start()
+        exchange_rate_set_thread2.start()
+        exchange_rate_set_thread3.start()
+        time.sleep(10)
+
+        # account1, ..., account50 supply 10000 umee, account51, ..., account100 supply 1000 umee,
+        # account101, ..., account200 supply 10000 atom and 200 juno
+        t1 = threading.Thread(target=self.batch_supply, args=(0, 50, "10000000000uumee", validator1_home))
+        t2 = threading.Thread(target=self.batch_supply, args=(50, 100, "1000000000uumee", validator1_home))
+        t3 = threading.Thread(target=self.batch_supply, args=(100, 200, "1000000000ibc/atom", validator1_home))
+        t4 = threading.Thread(target=self.batch_supply, args=(100, 200, "200000000ibc/juno", validator1_home))
+        t1.start()
+        t2.start()
+        t3.start()
+        t1.join()
+        t2.join()
+        t3.join()
+        t4.start()
+        t4.join()
+
+        time.sleep(10)
+
+        # account1, ..., account50 collateralize 10000 umee, account51, ..., account100 collateralize 1000 umee,
+        # account101, ..., account200 collateralize 10000 atom and 200 juno
+        t1 = threading.Thread(target=self.batch_collateralize, args=(0, 50, "10000000000u/uumee", validator1_home))
+        t2 = threading.Thread(target=self.batch_collateralize, args=(50, 100, "1000000000u/uumee", validator1_home))
+        t3 = threading.Thread(target=self.batch_collateralize, args=(100, 200, "1000000000u/ibc/atom", validator1_home))
+        t4 = threading.Thread(target=self.batch_collateralize, args=(100, 200, "200000000u/ibc/juno", validator1_home))
+        t1.start()
+        t2.start()
+        t3.start()
+        t1.join()
+        t2.join()
+        t3.join()
+        t4.start()
+        t4.join()
+
+        time.sleep(10)
+
+        # Query account balances to make sure transactions went through correctly
+        for i in range(0,50):
+            status, acc_balance = query_balances(accounts[i]["address"])
+            self.assertTrue(status)
+            self.assert_equal_balances(acc_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'990000000000'})
+        for i in range(50,100):
+            status, acc_balance = query_balances(accounts[i]["address"])
+            self.assertTrue(status)
+            self.assert_equal_balances(acc_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'999000000000'})
+        for i in range(100,200):
+            status, acc_balance = query_balances(accounts[i]["address"])
+            self.assertTrue(status)
+            self.assert_equal_balances(acc_balance, {'ibc/atom':'9000000000','ibc/juno':'19800000000','uumee':'1000000000000'})
+
+        # Every 1min, 9 times in total, acount51, ..., account100 supply and collateralize 1000 umee
+        for _ in range(9):
+            self.batch_supply(50, 100, "1000000000uumee", validator1_home)
+            self.batch_collateralize(50, 100, "1000000000u/uumee", validator1_home)
+            time.sleep(10)
+
+        # Query account balances to make sure transactions went through correctly
+        for i in range(0,50):
+            status, acc_balance = query_balances(accounts[i]["address"])
+            self.assertTrue(status)
+            self.assert_equal_balances(acc_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'990000000000'})
+        for i in range(50,100):
+            status, acc_balance = query_balances(accounts[i]["address"])
+            self.assertTrue(status)
+            self.assert_equal_balances(acc_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'990000000000'})
+        for i in range(100,200):
+            status, acc_balance = query_balances(accounts[i]["address"])
+            self.assertTrue(status)
+            self.assert_equal_balances(acc_balance, {'ibc/atom':'9000000000','ibc/juno':'19800000000','uumee':'1000000000000'})
+
+        # In parallel, account1, ..., account20 borrow 10 atom, account21, ..., account40 borrow 100 atom,
+        # account41, ..., account60 borrow 150 atom, account61, ..., account100 borrow 300 juno
+        t1 = threading.Thread(target=self.batch_borrow, args=(0, 20, "10000000ibc/atom", validator1_home))
+        t2 = threading.Thread(target=self.batch_borrow, args=(20, 40, "100000000ibc/atom", validator1_home))
+        t3 = threading.Thread(target=self.batch_borrow, args=(40, 60, "150000000ibc/atom", validator1_home))
+        t4 = threading.Thread(target=self.batch_borrow, args=(60, 100, "300000000ibc/juno", validator1_home))
+        t1.start()
+        t2.start()
+        t3.start()
+        t4.start()
+        t1.join()
+        t2.join()
+        t3.join()
+        t4.join()
+
+        time.sleep(10)
+
+        # Query account balances to make sure transactions went through correctly
+        for i in range(0,20):
+            status, acc_balance = query_balances(accounts[i]["address"])
+            self.assertTrue(status)
+            self.assert_equal_balances(acc_balance, {'ibc/atom':'10010000000','ibc/juno':'20000000000','uumee':'990000000000'})
+        for i in range(20,40):
+            status, acc_balance = query_balances(accounts[i]["address"])
+            self.assertTrue(status)
+            self.assert_equal_balances(acc_balance, {'ibc/atom':'10100000000','ibc/juno':'20000000000','uumee':'990000000000'})
+        for i in range(40,60):
+            status, acc_balance = query_balances(accounts[i]["address"])
+            self.assertTrue(status)
+            self.assert_equal_balances(acc_balance, {'ibc/atom':'10150000000','ibc/juno':'20000000000','uumee':'990000000000'})
+        for i in range(60,100):
+            status, acc_balance = query_balances(accounts[i]["address"])
+            self.assertTrue(status)
+            self.assert_equal_balances(acc_balance, {'ibc/atom':'10000000000','ibc/juno':'20300000000','uumee':'990000000000'})
+
+        # Stop exhange rate setting thread
+        self.stop_exchange_rate_set = True
+        exchange_rate_set_thread1.join()
+        exchange_rate_set_thread2.join()
+        exchange_rate_set_thread3.join()
+
+        # Price of atom grows to 2 usd, price of juno grows to 0.7 usd. Restart exchange rate setting with new rates.
+        exchange_rate_set_thread1 = threading.Thread(target=self.exchange_rate_set, args=(UPDATED_EXCHANGE_RATES, validator1_val, validator1_home))
+        exchange_rate_set_thread2 = threading.Thread(target=self.exchange_rate_set, args=(UPDATED_EXCHANGE_RATES, validator2_val, validator2_home))
+        exchange_rate_set_thread3 = threading.Thread(target=self.exchange_rate_set, args=(UPDATED_EXCHANGE_RATES, validator3_val, validator3_home))
+        exchange_rate_set_thread1.start()
+        exchange_rate_set_thread2.start()
+        exchange_rate_set_thread3.start()
+        time.sleep(10)
+
+        # Liquidate whatever possible in parallel
+
+        # Stop exhange rate setting thread
+        self.stop_exchange_rate_set = True
+        exchange_rate_set_thread1.join()
+        exchange_rate_set_thread2.join()
+        exchange_rate_set_thread3.join()
+
+    # GH Issue: https://github.com/umee-network/umee/issues/1208
+    # def test_functional_two(self):
 
 if __name__ == "__main__":
     logging.info("INFO: running leverage module tests")
