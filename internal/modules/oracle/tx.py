@@ -1,4 +1,10 @@
 from utils import exec_command, env
+from modules.oracle.hash import (
+    get_hash,
+)
+from modules.oracle.query import (
+    wait_for_next_voting_period,
+)
 
 DAEMON = env.DAEMON
 DAEMON_HOME = env.DAEMON_HOME
@@ -6,6 +12,8 @@ RPC = env.RPC
 CHAINID = env.CHAINID
 DEFAULT_GAS = env.DEFAULT_GAS
 DEFAULT_BROADCAST_MODE = "block"
+
+STATIC_SALT = "af8ed1e1f34ac1ac00014581cbc31f2f24480b09786ac83aabf2765dada87509"
 
 # tx_submit_prevote submits an aggregate prevote tx given a hash and
 # feeder address.
@@ -53,3 +61,11 @@ def tx_delegate_feed_consent(
         --home {home} --from {operator} --node {RPC} --output json \
         --gas {gas} -b {broadcast_mode} -y"""
     return exec_command(command)
+
+def tx_send_prevote_and_vote(validator, exchange_rates):
+    vote_hash = get_hash(exchange_rates.ToString(), STATIC_SALT, validator['address'])
+    status, response = tx_submit_prevote(validator["name"], vote_hash, validator['home'])
+    if not status:
+        return status, response
+    wait_for_next_voting_period(int(response['height']))
+    return tx_submit_vote(validator["name"], STATIC_SALT, validator['home'], exchange_rates.ToString())
