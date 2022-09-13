@@ -252,9 +252,6 @@ done
 
 python3 $CURPATH/../../internal/core/status.py
 
-journalctl -u umeed-1 -n 200 -r
-cat $DAEMON_HOME-1/config/app.toml
-
 if $ENABLE_PRICE_FEEDER; then
     for (( a=1; a<=$NUM_VALS; a++ ))
     do
