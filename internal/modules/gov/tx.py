@@ -11,6 +11,7 @@ DAEMON_HOME = env.DAEMON_HOME
 RPC = env.RPC
 CHAINID = env.CHAINID
 DEFAULT_GAS = env.DEFAULT_GAS
+DEFAULT_FEES = env.DEFAULT_FEES
 
 # tx_submit_proposal internally calls the submit proposal transaction with given proposal type
 # and return the response in json format.
@@ -23,7 +24,7 @@ def tx_submit_proposal(
 ):
     command = f"""{DAEMON} tx gov submit-legacy-proposal {proposal_type} {proposal_file_or_name} \
 --chain-id {CHAINID} --keyring-backend test \
---home {DAEMON_HOME}-1 --from {from_key} --node {RPC} --output json -y --gas {gas}"""
+--home {DAEMON_HOME}-1 --from {from_key} --node {RPC} --output json -y --gas {gas} --fees {DEFAULT_FEES}"""
     print("tx_submit_proposal", command)
     return exec_command(command, extra_args)
 
@@ -37,7 +38,7 @@ def tx_cancel_software_upgrade(
 ):
     command = f"""{DAEMON} tx gov submit-proposal cancel-software-upgrade \
 --chain-id {CHAINID} --keyring-backend test \
---home {DAEMON_HOME}-1 --from {from_key} --node {RPC} --output json -y --gas {gas}"""
+--home {DAEMON_HOME}-1 --from {from_key} --node {RPC} --output json -y --gas {gas} --fees {DEFAULT_FEES}"""
     return exec_command(command, extra_args)
 
 
@@ -51,7 +52,7 @@ def tx_deposit(
 ):
     command = f"""{DAEMON} tx gov deposit {proposal_id} {deposit} \
 --chain-id {CHAINID} --keyring-backend test \
---home {DAEMON_HOME}-1 --from {from_key} --node {RPC} --output json -y --gas {gas}"""
+--home {DAEMON_HOME}-1 --from {from_key} --node {RPC} --output json -y --gas {gas} --fees {DEFAULT_FEES}"""
     return exec_command(command, extra_args)
 
 
@@ -66,7 +67,7 @@ def tx_vote(
 ):
     command = f"""{DAEMON} tx gov vote {proposal_id} {option} \
 --chain-id {CHAINID} --keyring-backend test \
---home {home} --from {from_key} --node {RPC} --output json -y --gas {gas}"""
+--home {home} --from {from_key} --node {RPC} --output json -y --gas {gas} --fees {DEFAULT_FEES}"""
     return exec_command(command, extra_args)
 
 
@@ -82,7 +83,7 @@ def tx_weighted_vote(
 ):
     command = f"""{DAEMON} tx gov weighted-vote {proposal_id} {options} \
 --chain-id {CHAINID} --keyring-backend test \
---home {home} --from {from_key} --node {RPC} --output json -y --gas {gas}"""
+--home {home} --from {from_key} --node {RPC} --output json -y --gas {gas} --fees {DEFAULT_FEES}"""
     return exec_command(command, extra_args)
 
 

@@ -11,6 +11,7 @@ DAEMON_HOME = env.DAEMON_HOME
 RPC = env.RPC
 CHAINID = env.CHAINID
 DEFAULT_GAS = env.DEFAULT_GAS
+DEFAULT_FEES = env.DEFAULT_FEES
 DEFAULT_BROADCAST_MODE = "block"
 
 STATIC_SALT = "af8ed1e1f34ac1ac00014581cbc31f2f24480b09786ac83aabf2765dada87509"
@@ -28,7 +29,7 @@ def tx_submit_prevote(
     command = f"""{DAEMON} tx oracle exchange-rate-prevote {hash} {validator} \
         --chain-id {CHAINID} --keyring-backend test \
         --home {home} --from {from_key} --node {RPC} --output json \
-        --gas {gas} -b {broadcast_mode} -y"""
+        --gas {gas} -b {broadcast_mode} -y --fees {DEFAULT_FEES}"""
     return exec_command(command)
 
 # tx_submit_vote submits an aggregate vote tx given a salt, exchange
@@ -45,7 +46,7 @@ def tx_submit_vote(
     command = f"""{DAEMON} tx oracle exchange-rate-vote {salt} {exchange_rates} {validator} \
         --chain-id {CHAINID} --keyring-backend test \
         --home {home} --from {from_key} --node {RPC} --output json \
-        --gas {gas} -b {broadcast_mode} -y"""
+        --gas {gas} -b {broadcast_mode} -y --fees {DEFAULT_FEES}"""
     return exec_command(command)
 
 # tx_delegate_feed_consent submits a tx
@@ -59,7 +60,7 @@ def tx_delegate_feed_consent(
     command = f"""{DAEMON} tx oracle delegate-feed-consent {operator} {delegate} \
         --chain-id {CHAINID} --keyring-backend test \
         --home {home} --from {operator} --node {RPC} --output json \
-        --gas {gas} -b {broadcast_mode} -y"""
+        --gas {gas} -b {broadcast_mode} -y --fees {DEFAULT_FEES}"""
     return exec_command(command)
 
 def tx_send_prevote_and_vote(validator, exchange_rates):
