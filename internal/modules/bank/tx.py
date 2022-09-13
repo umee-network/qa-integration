@@ -12,7 +12,7 @@ HOME = env.HOME
 DAEMON_HOME = env.DAEMON_HOME
 RPC = env.RPC
 DEFAULT_GAS = env.DEFAULT_GAS
-
+DEFAULT_FEES = env.DEFAULT_FEES
 
 def create_unsigned_txs(from_address, to_address, amount, file_name):
     """
@@ -100,17 +100,17 @@ def tx_send(  # pylint: disable=C0330, R0913
     """
     if unsigned:
         command = f"""{DAEMON} tx bank send {from_address} {to_address} {amount}{DENOM} \
-            --chain-id {CHAINID} --output json --node {RPC} --generate-only --gas {gas}"""
+            --chain-id {CHAINID} --output json --node {RPC} --generate-only --gas {gas} -b block --fees {DEFAULT_FEES}"""
     else:
         if sequence is not None:
             command = f"""{DAEMON} tx bank send {from_address} {to_address} {amount}{DENOM} \
                 --chain-id {CHAINID} --keyring-backend test --home {DAEMON_HOME}-1 --node {RPC} \
-                    --output json -y --sequence {sequence} --gas {gas}"""
+                    --output json -y --sequence {sequence} --gas {gas} -b block --fees {DEFAULT_FEES}"""
 
         else:
             command = f"""{DAEMON} tx bank send {from_address} {to_address} {amount}{DENOM} \
                 --chain-id {CHAINID} --keyring-backend test --home {DAEMON_HOME}-1 --node {RPC} \
-                    --output json -y --gas {gas}"""
+                    --output json -y --gas {gas} -b block --fees {DEFAULT_FEES}"""
             if extra_args != "":
                 command = f"""{command} {extra_args}"""
     return exec_command(command)

@@ -22,7 +22,6 @@ grantee_2 = keys_show("account2")[1]["address"]
 receiver = keys_show("validator2", "acc", NODE2_HOME)[1]["address"]
 
 amount = 5
-fees = 2
 
 
 class TestFeegrantModuleTxsQueries(unittest.TestCase):
@@ -53,7 +52,7 @@ class TestFeegrantModuleTxsQueries(unittest.TestCase):
         receiver_bal_old = int(receiver_bal_old["balances"][0]["amount"])
 
         # send tx
-        extra_args = f"--fee-account {granter} --fees {fees}stake"
+        extra_args = f""
         status, response = tx_send(grantee_1, receiver, amount, extra_args=extra_args)
         self.assertTrue(status)
         time.sleep(3)
@@ -71,8 +70,8 @@ class TestFeegrantModuleTxsQueries(unittest.TestCase):
         self.assertTrue(status)
         receiver_bal_updated = int(receiver_bal_updated["balances"][0]["amount"])
 
-        self.assertEqual((granter_bal_old - fees), granter_bal_updated)
-        self.assertEqual((grantee_bal_old - amount), grantee_bal_updated)
+        self.assertEqual(granter_bal_old, granter_bal_updated)
+        self.assertEqual((grantee_bal_old - amount - int(env.DEFAULT_FEES[:-5])), grantee_bal_updated)
         self.assertEqual((receiver_bal_old + amount), receiver_bal_updated)
 
     def test_revoke_feegrant_tx(self):
@@ -95,7 +94,7 @@ class TestFeegrantModuleTxsQueries(unittest.TestCase):
         )
 
         # send tx
-        extra_args = f"--fee-account {granter} --fees {fees}stake"
+        extra_args = f""
         status, response = tx_send(grantee_2, receiver, amount, extra_args=extra_args)
         self.assertTrue(status)
         time.sleep(3)
@@ -107,7 +106,7 @@ class TestFeegrantModuleTxsQueries(unittest.TestCase):
         spend_limit_after = int(
             periodic_grant["allowance"]["basic"]["spend_limit"][0]["amount"]
         )
-        self.assertEqual((spend_limit_before - fees), spend_limit_after)
+        self.assertEqual(spend_limit_before, spend_limit_after)
 
     def test_query_feegrants(self):
         # test grants of grantee

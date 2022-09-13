@@ -48,6 +48,7 @@ def exec_command(command, extra_args=""):
     Returns:
         _tuple_: str, str
     """
+    print(command)
     try:
         if extra_args != "":
             command = f"{command} {extra_args}"
@@ -67,6 +68,8 @@ def exec_command(command, extra_args=""):
             command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE
         ).communicate()
         out, error = stdout.strip().decode(), stderr.strip().decode()
+        print(out)
+        print(error)
         if test_type and cmd_type:
             record_stat(test_type, cmd_type, out, error)
         if len(error) != 0:

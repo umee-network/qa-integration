@@ -29,7 +29,7 @@ class TestAuthzModuleTxsQueries(unittest.TestCase):
         assert status, "error in authz grant tx!!!"
         time.sleep(3)
 
-    def test_authz_grant(self):
+    def test_1_authz_grant(self):
         status, grants = query_authz_grants(granter, grantee)
         self.assertTrue(status)
         l = len(grants)
@@ -37,7 +37,7 @@ class TestAuthzModuleTxsQueries(unittest.TestCase):
         spend_limit = grants["grants"][0]["authorization"]["spend_limit"][0]["amount"]
         self.assertIsNotNone(spend_limit)
 
-    def test_query_authz_grants(self):
+    def test_2_query_authz_grants(self):
         # test grants granted to a grantee
         status, grantee_grants = query_authz_grantee_grants(grantee)
         self.assertTrue(status)
@@ -56,7 +56,7 @@ class TestAuthzModuleTxsQueries(unittest.TestCase):
         grantee_addr = granter_grants["grants"][0]["grantee"]
         self.assertEqual(grantee_addr, grantee)
 
-    def test_exec_tx(self):
+    def test_3_exec_tx(self):
         # query old balances of granter and reciver
         status, granter_bal_old = query_balances(granter)
         self.assertTrue(status)
@@ -71,12 +71,10 @@ class TestAuthzModuleTxsQueries(unittest.TestCase):
             granter, receiver, amount, temp_file
         )
         self.assertTrue(status)
-        time.sleep(3)
 
         # executing generated authz transfer tx from grantee
         status, tx = execute_authz_tx("account2", temp_file)
         self.assertTrue(status)
-        time.sleep(3)
 
         # query new balances of granter and reciver
         status, granter_bal_updated = query_balances(granter)
@@ -89,20 +87,20 @@ class TestAuthzModuleTxsQueries(unittest.TestCase):
         self.assertEqual((granter_bal_old - amount), granter_bal_updated)
         self.assertEqual((receiver_bal_old + amount), receiver_bal_updated)
 
-    def test_revoke_tx(self):
-        # revoke authz grants
-        status, tx_res = tx_revoke_authz(granter, grantee)
-        self.assertTrue(status)
-        time.sleep(3)
+    # def test_revoke_tx(self):
+    #     # revoke authz grants
+    #     status, tx_res = tx_revoke_authz(granter, grantee)
+    #     self.assertTrue(status)
+    #     time.sleep(3)
 
-        status, grants = query_authz_grants(granter, grantee)
-        self.assertTrue(status)
-        count = int(grants["pagination"]["total"])
-        self.assertEqual(count, 0)
+    #     status, grants = query_authz_grants(granter, grantee)
+    #     self.assertTrue(status)
+    #     count = int(grants["pagination"]["total"])
+    #     self.assertEqual(count, 0)
 
-        # close and remove temp file
-        temp.close()
-        os.remove(temp_file)
+    #     # close and remove temp file
+    #     temp.close()
+    #     os.remove(temp_file)
 
 
 if __name__ == "__main__":

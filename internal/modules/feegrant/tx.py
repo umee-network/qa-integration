@@ -7,6 +7,7 @@ HOME = env.HOME
 DAEMON_HOME = env.DAEMON_HOME
 RPC = env.RPC
 DEFAULT_GAS = env.DEFAULT_GAS
+DEFAULT_FEES = env.DEFAULT_FEES
 
 # `tx_grant` takes granter_key and grantee address as paramaters and executes feegrant grant tx
 # internally and returns the json response.
@@ -15,7 +16,7 @@ def tx_grant(
     grantee,
     gas=DEFAULT_GAS,
 ):
-    command = f"{DAEMON} tx feegrant grant {granter_key} {grantee} --spend-limit 100stake --chain-id {CHAINID} --keyring-backend test --home {DAEMON_HOME}-1 --node {RPC} --output json -y --gas {gas}"
+    command = f"{DAEMON} tx feegrant grant {granter_key} {grantee} --spend-limit 100stake --chain-id {CHAINID} --keyring-backend test --home {DAEMON_HOME}-1 --node {RPC} --output json -y --gas {gas} --fees {DEFAULT_FEES}"
     return exec_command(command)
 
 
@@ -26,7 +27,7 @@ def set_periodic_grant(
     grantee,
     gas=DEFAULT_GAS,
 ):
-    command = f"{DAEMON} tx feegrant grant {granter_key} {grantee} --spend-limit 100stake --period 60 --period-limit 10stake --chain-id {CHAINID} --keyring-backend test --home {DAEMON_HOME}-1 --node {RPC} --output json -y --gas {gas}"
+    command = f"{DAEMON} tx feegrant grant {granter_key} {grantee} --spend-limit 100stake --period 60 --period-limit 10stake --chain-id {CHAINID} --keyring-backend test --home {DAEMON_HOME}-1 --node {RPC} --output json -y --gas {gas} --fees {DEFAULT_FEES}"
     return exec_command(command)
 
 
@@ -37,5 +38,5 @@ def tx_revoke_feegrant(
     grantee,
     gas=DEFAULT_GAS,
 ):
-    command = f"{DAEMON} tx feegrant revoke {granter_key} {grantee} --chain-id {CHAINID} --keyring-backend test --home {DAEMON_HOME}-1 --node {RPC} --output json -y --gas {gas}"
+    command = f"{DAEMON} tx feegrant revoke {granter_key} {grantee} --chain-id {CHAINID} --keyring-backend test --home {DAEMON_HOME}-1 --node {RPC} --output json -y --gas {gas} --fees {DEFAULT_FEES}"
     return exec_command(command)

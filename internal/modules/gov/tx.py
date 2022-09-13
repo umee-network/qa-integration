@@ -1,6 +1,6 @@
 import time
 from utils import exec_command, env
-from internal.modules.gov.query import query_proposals, query_proposal, query_proposer, query_deposits, query_deposit, query_votes, query_vote, query_tally
+from internal.modules.gov.query import query_proposals
 from internal.core.keys import keys_show
 
 YES_VOTE = "VOTE_OPTION_YES"

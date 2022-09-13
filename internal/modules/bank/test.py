@@ -2,6 +2,7 @@ import time
 import logging
 import unittest
 from core.keys import keys_show
+from internal.utils import env
 from modules.bank.tx import (
     tx_send,
 )
@@ -52,7 +53,7 @@ class TestBankModuleTxsQueries(unittest.TestCase):
         self.assertTrue(status)
         receiver_balance_new = int(receiver_balance_new["balances"][0]["amount"])
 
-        self.assertEqual((sender_balance_old - amount), sender_balance_new)
+        self.assertEqual((sender_balance_old - amount - int(env.DEFAULT_FEES[:-5])), sender_balance_new)
         self.assertEqual((receiver_balance_old + amount), receiver_balance_new)
 
     def test_query_total_supply(self):

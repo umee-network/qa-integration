@@ -12,5 +12,5 @@ def query_grant(granter, grantee):
 
 # `query_greantee_grants` queries all grants of a grantee.
 def query_greantee_grants(grantee):
-    command = f"{DAEMON} q feegrant grants {grantee} --node {RPC} --chain-id {CHAINID} --output json --count-total"
+    command = f"{DAEMON} q feegrant grants-by-grantee {grantee} --node {RPC} --chain-id {CHAINID} --output json --count-total"
     return exec_command(command)
