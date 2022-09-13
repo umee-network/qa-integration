@@ -252,6 +252,8 @@ done
 
 python3 $CURPATH/../../internal/core/status.py
 
+journalctl -u umeed-1
+
 if $ENABLE_PRICE_FEEDER; then
     for (( a=1; a<=$NUM_VALS; a++ ))
     do
