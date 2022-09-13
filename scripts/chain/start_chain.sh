@@ -237,7 +237,7 @@ do
     sed -i -e 's#max_num_inbound_peers =.*$#max_num_inbound_peers = 140#' $DAEMON_HOME-$a/config/config.toml
     sed -i -e 's#max_num_outbound_peers =.*$#max_num_outbound_peers = 110#' $DAEMON_HOME-$a/config/config.toml
     sed -i -e 's#skip_timeout_commit = false#skip_timeout_commit = true#' $DAEMON_HOME-$a/config/config.toml
-    sed -i -e 's#minimum-gas-prices = ""#minimum-gas-prices = "0uumee"#' $DAEMON_HOME-$a/config/app.toml
+    sed -i -e 's#minimum-gas-prices = ""#minimum-gas-prices = "0.05uumee"#' $DAEMON_HOME-$a/config/app.toml
 
     if $ENABLE_PRICE_FEEDER; then
         price_feeder_set_config $a
@@ -252,7 +252,8 @@ done
 
 python3 $CURPATH/../../internal/core/status.py
 
-journalctl -u umeed-1
+journalctl -u umeed-1 -n 200 -r
+cat $DAEMON_HOME-1/config/app.toml
 
 if $ENABLE_PRICE_FEEDER; then
     for (( a=1; a<=$NUM_VALS; a++ ))
