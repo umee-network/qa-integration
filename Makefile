@@ -8,8 +8,6 @@ lint: install-deps
 
 setup-chain: install-deps stop-chain
 	@bash ./scripts/chain/start_chain.sh 5
-	@echo "Waiting for chain to start..."
-	@sleep 7
 
 setup-chain-create-ibc-accs: install-deps stop-chain
 	@bash ./scripts/chain/start_chain.sh 5 true true
@@ -18,8 +16,6 @@ setup-chain-create-ibc-accs: install-deps stop-chain
 
 setup-chain-no-pf: install-deps stop-chain
 	@bash ./scripts/chain/start_chain.sh 3 false
-	@echo "Waiting for chain to start..."
-	@sleep 7
 
 setup-chain-no-pf-create-ibc-accs: install-deps stop-chain
 	@bash ./scripts/chain/start_chain.sh 3 false true
@@ -39,9 +35,6 @@ test-all: setup-chain
 	@bash ./scripts/chain/node_status.sh
 	@bash ./scripts/chain/pause_nodes.sh
 	@bash ./scripts/chain/resume_nodes.sh
-
-	@echo "Waiting for chain to resume..."
-	@sleep 7
 
 	TEST_TYPE=multi-msg-load bash ./scripts/tests/multi_msg_load.sh
 	TEST_TYPE=query-load bash ./scripts/tests/query_load.sh
