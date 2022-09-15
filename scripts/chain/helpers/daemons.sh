@@ -1,4 +1,4 @@
-#/bin/sh
+#!/bin/bash
 
 ## This script serves to store daemons related functions
 ## it goes from the perspective that we have
