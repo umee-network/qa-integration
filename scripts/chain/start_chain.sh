@@ -147,7 +147,7 @@ fi
 
 if $CREATE_IBC_ACCOUNTS; then
     echo "Adding IBC genesis accounts"
-    for (( a=1; a<=200; a++ ))
+    for (( a=1; a<=400; a++ ))
     do
         $DAEMON keys add "a_${a}" --keyring-backend test --home $DAEMON_HOME-1
         $DAEMON --home $DAEMON_HOME-1 add-genesis-account $($DAEMON keys show a_$a -a --home $DAEMON_HOME-1 --keyring-backend test) 1000000000000$DENOM,10000000000ibc/atom,20000000000ibc/juno

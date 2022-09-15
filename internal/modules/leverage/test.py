@@ -34,13 +34,18 @@ UPDATED_EXCHANGE_RATES = ExchangeRates(
 
 from modules.leverage.query import (
     query_registered_tokens,
+    query_market_summary,
+    query_liquidation_targets,
+    query_account_summary,
 )
 from modules.leverage.tx import (
     tx_supply,
     tx_withdraw,
     tx_collateralize,
+    tx_decollateralize,
     tx_borrow,
     tx_repay,
+    tx_liquidate,
 )
 
 BLOCKS_PER_VOTING_PERIOD = 10
@@ -64,6 +69,11 @@ accounts = []
 for i in range(1, 201):
     acc = keys_show("a_" + str(i))[1]
     accounts.append(acc)
+
+liquidators = []
+for i in range(201, 401):
+    liq = keys_show("a_" + str(i))[1]
+    liquidators.append(liq)
 
 class TestLeverageModuleTxsQueries(unittest.TestCase):
     @classmethod
@@ -115,6 +125,13 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
             self.assertEqual(acc_balance["balances"][i]["amount"], amount)
             i+=1
 
+    def assert_equal_summaries(self, acc_summary, summary_amounts):
+        self.assertEqual(acc_summary["supplied_value"], summary_amounts["supplied_value"])
+        self.assertEqual(acc_summary["collateral_value"], summary_amounts["collateral_value"])
+        self.assertEqual(acc_summary["borrowed_value"], summary_amounts["borrowed_value"])
+        self.assertEqual(acc_summary["borrow_limit"], summary_amounts["borrow_limit"])
+        self.assertEqual(acc_summary["liquidation_threshold"], summary_amounts["liquidation_threshold"])
+
     def batch_supply(self, first_account, last_account, amount, validator_home):
         for i in range(first_account, last_account):
             status = tx_supply(accounts[i]["name"], amount, validator_home, 'async')
@@ -130,9 +147,9 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
             status = tx_borrow(accounts[i]["name"], amount, validator_home, 'async')
             self.assertTrue(status)
 
-    def batch_liquidate(self, first_account, last_account, borrower, amount, reward_denom, validator_home):
+    def batch_liquidate(self, first_account, last_account, amount, reward_denom, validator_home):
         for i in range(first_account, last_account):
-            status = tx_liquidate(accounts[i]["name"], borrower, amount, reward_denom, validator_home, 'async')
+            status = tx_liquidate(liquidators[i]["name"], accounts[i]["address"], amount, reward_denom, validator_home)
             self.assertTrue(status)
 
     def supply_or_withdraw(self):
@@ -220,7 +237,7 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         self.assertTrue(status)
         print("\nAcc1 balances at start of simple functional test: ", acc1_balance["balances"])
         self.assert_equal_balances(acc1_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'1000000000000'})
-        status, acc2_balance = query_balances(accounts[0]["address"])
+        status, acc2_balance = query_balances(accounts[1]["address"])
         self.assertTrue(status)
         print("\nAcc2 balances at start of simple functional test: ", acc2_balance["balances"])
         self.assert_equal_balances(acc2_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'1000000000000'})
@@ -274,6 +291,27 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         self.assertTrue(status)
         print("\nAcc2 balances after acc1 repaid 1 atom: ", acc2_balance["balances"])
         self.assert_equal_balances(acc2_balance, {'ibc/atom':'9999000000','ibc/juno':'20000000000','u/ibc/atom':'1000000','uumee':'1000000000000'})
+
+        # Restore initial balances for User A and User B
+        # User A decollateralizes and withdraws 10000 umee
+        status = tx_decollateralize(accounts[0]["name"], "10000000000u/uumee", validator1_home)
+        self.assertTrue(status)
+        status = tx_withdraw(accounts[0]["name"], "10000000000u/uumee", validator1_home)
+        self.assertTrue(status)
+
+        # User B withdraws 1 atom
+        status = tx_withdraw(accounts[1]["name"], "1000000u/ibc/atom", validator1_home)
+        self.assertTrue(status)
+
+        status, acc1_balance = query_balances(accounts[0]["address"])
+        self.assertTrue(status)
+        print("\nAcc1 balances at end of simple functional test: ", acc1_balance["balances"])
+        self.assert_equal_balances(acc1_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'1000000000000'})
+        status, acc2_balance = query_balances(accounts[1]["address"])
+        self.assertTrue(status)
+        print("\nAcc2 balances at end of simple functional test: ", acc2_balance["balances"])
+        self.assert_equal_balances(acc2_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'1000000000000'})
+
 
         # Stop exhange rate setting thread
         self.stop_exchange_rate_set = True
@@ -401,16 +439,123 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         exchange_rate_set_thread2.join()
         exchange_rate_set_thread3.join()
 
-        # Price of atom grows to 2 usd, price of juno grows to 0.7 usd. Restart exchange rate setting with new rates.
+        # Price of atom grows to 2 usd, price of juno grows to 0.7 usd. Restart exchange rate setting with new rates
+        self.stop_exchange_rate_set = False
         exchange_rate_set_thread1 = threading.Thread(target=self.exchange_rate_set, args=(UPDATED_EXCHANGE_RATES, validator1_val, validator1_home))
         exchange_rate_set_thread2 = threading.Thread(target=self.exchange_rate_set, args=(UPDATED_EXCHANGE_RATES, validator2_val, validator2_home))
         exchange_rate_set_thread3 = threading.Thread(target=self.exchange_rate_set, args=(UPDATED_EXCHANGE_RATES, validator3_val, validator3_home))
         exchange_rate_set_thread1.start()
         exchange_rate_set_thread2.start()
         exchange_rate_set_thread3.start()
+        time.sleep(20)
+
+        status, targets = query_liquidation_targets()
+        self.assertTrue(status)
+        self.assertTrue(len(targets['targets']) == 80, "There should be 80 accounts able to be liquidated (i.e. acount21 - acount100)")
+
+        for t in targets['targets']:
+            status, summary = query_account_summary(t)
+            self.assertTrue(status)
+            self.assertTrue(summary['borrowed_value'] > summary['liquidation_threshold'], f'Account with address {t} should not be a liquidation target')
+
+        # Query account summaries before liquidations
+        for i in range(0,20):
+            status, summary = query_account_summary(accounts[i]["address"])
+            self.assertTrue(status)
+            print(f'Account summary for account{i+1} before liquidations: {summary}')
+            self.assert_equal_summaries(summary, {'supplied_value': '200.000000000000000000', 'collateral_value': '200.000000000000000000', 'borrowed_value': '20.000000000000000000', 'borrow_limit': '150.000000000000000000', 'liquidation_threshold': '150.000000000000000000'})
+        for i in range(20,40):
+            status, summary = query_account_summary(accounts[i]["address"])
+            self.assertTrue(status)
+            print(f'Account summary for account{i+1} before liquidations: {summary}')
+            self.assert_equal_summaries(summary, {'supplied_value': '200.000000000000000000', 'collateral_value': '200.000000000000000000', 'borrowed_value': '200.000000000000000000', 'borrow_limit': '150.000000000000000000', 'liquidation_threshold': '150.000000000000000000'})
+        for i in range(40,60):
+            status, summary = query_account_summary(accounts[i]["address"])
+            self.assertTrue(status)
+            print(f'Account summary for account{i+1} before liquidations: {summary}')
+            self.assert_equal_summaries(summary, {'supplied_value': '200.000000000000000000', 'collateral_value': '200.000000000000000000', 'borrowed_value': '300.000000000000000000', 'borrow_limit': '150.000000000000000000', 'liquidation_threshold': '150.000000000000000000'})
+        for i in range(60,100):
+            status, summary = query_account_summary(accounts[i]["address"])
+            self.assertTrue(status)
+            print(f'Account summary for account{i+1} before liquidations: {summary}')
+            self.assert_equal_summaries(summary, {'supplied_value': '200.000000000000000000', 'collateral_value': '200.000000000000000000', 'borrowed_value': '210.000000000000000000', 'borrow_limit': '150.000000000000000000', 'liquidation_threshold': '150.000000000000000000'})
+
+
+        # Liquidate whatever possible in parallel (acount21, ..., acount100)
+        max_juno_ammount = 300000000 * (200/210) # Juno amount as 200 usd since that is amount collateralized
+        t1 = threading.Thread(target=self.batch_liquidate, args=(20, 40, "100000000ibc/atom", "uumee", validator1_home))
+        t2 = threading.Thread(target=self.batch_liquidate, args=(40, 60, "100000000ibc/atom", "uumee", validator1_home))
+        t3 = threading.Thread(target=self.batch_liquidate, args=(60, 100, str(max_juno_ammount) + "ibc/juno", "uumee", validator1_home))
+        t1.start()
+        t2.start()
+        t3.start()
+        t1.join()
+        t2.join()
+        t3.join()
+
         time.sleep(10)
 
-        # Liquidate whatever possible in parallel
+        # Query account balances to make sure transactions went through correctly and account summaries after liquidations
+        for i in range(0,20):
+            status, acc_balance = query_balances(accounts[i]["address"])
+            self.assertTrue(status)
+            print(f'Acc_balance for account{i+1}: {acc_balance}')
+            status, liq_balance = query_balances(liquidators[i]["address"])
+            self.assertTrue(status)
+            print(f'Acc_balance for liquidator{i+1}: {liq_balance}')
+            self.assert_equal_balances(acc_balance, {'ibc/atom':'10010000000','ibc/juno':'20000000000','uumee':'990000000000'})
+            self.assert_equal_balances(liq_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'1000000000000'})
+
+            status, summary = query_account_summary(accounts[i]["address"])
+            self.assertTrue(status)
+            print(f'Account summary for account{i+1} after liquidations: {summary}')
+            self.assert_equal_summaries(summary, {'supplied_value': '200.000000000000000000', 'collateral_value': '200.000000000000000000', 'borrowed_value': '20.000000000000000000', 'borrow_limit': '150.000000000000000000', 'liquidation_threshold': '150.000000000000000000'})
+
+            
+        for i in range(20,40):
+            status, acc_balance = query_balances(accounts[i]["address"])
+            self.assertTrue(status)
+            print(f'Acc_balance for account{i+1}: {acc_balance}')
+            status, liq_balance = query_balances(liquidators[i]["address"])
+            self.assertTrue(status)
+            print(f'Acc_balance for liquidator{i+1}: {liq_balance}')
+            self.assert_equal_balances(acc_balance, {'ibc/atom':'10100000000','ibc/juno':'20000000000','uumee':'990000000000'})
+            self.assert_equal_balances(liq_balance, {'ibc/atom':'9908256880','ibc/juno':'20000000000','uumee':'1010000000000'})
+
+            status, summary = query_account_summary(accounts[i]["address"])
+            self.assertTrue(status)
+            print(f'Account summary for account{i+1} after liquidations: {summary}')
+            self.assert_equal_summaries(summary, {'supplied_value': '0.000000000000000000', 'collateral_value': '0.000000000000000000', 'borrowed_value': '16.513760000000000000', 'borrow_limit': '0.000000000000000000', 'liquidation_threshold': '0.000000000000000000'})
+            
+        for i in range(40,60):
+            status, acc_balance = query_balances(accounts[i]["address"])
+            self.assertTrue(status)
+            print(f'Acc_balance for account{i+1}: {acc_balance}')
+            status, liq_balance = query_balances(liquidators[i]["address"])
+            self.assertTrue(status)
+            print(f'Acc_balance for liquidator{i+1}: {liq_balance}')
+            self.assert_equal_balances(acc_balance, {'ibc/atom':'10150000000','ibc/juno':'20000000000','uumee':'990000000000'})
+            self.assert_equal_balances(liq_balance, {'ibc/atom':'9908256880','ibc/juno':'20000000000','uumee':'1010000000000'})
+
+            status, summary = query_account_summary(accounts[i]["address"])
+            self.assertTrue(status)
+            print(f'Account summary for account{i+1} after liquidations: {summary}')
+            self.assert_equal_summaries(summary, {'supplied_value': '0.000000000000000000', 'collateral_value': '0.000000000000000000', 'borrowed_value': '116.513760000000000000', 'borrow_limit': '0.000000000000000000', 'liquidation_threshold': '0.000000000000000000'})
+            
+        for i in range(60,100):
+            status, acc_balance = query_balances(accounts[i]["address"])
+            self.assertTrue(status)
+            print(f'Acc_balance for account{i+1}: {acc_balance}')
+            status, liq_balance = query_balances(liquidators[i]["address"])
+            self.assertTrue(status)
+            print(f'Acc_balance for liquidator{i+1}: {liq_balance}')
+            self.assert_equal_balances(acc_balance, {'ibc/atom':'10000000000','ibc/juno':'20300000000','uumee':'990000000000'})
+            self.assert_equal_balances(liq_balance, {'ibc/atom':'10000000000','ibc/juno':'19737876802','uumee':'1009999999999'})
+
+            status, summary = query_account_summary(accounts[i]["address"])
+            self.assertTrue(status)
+            print(f'Account summary for account{i+1} after liquidations: {summary}')
+            self.assert_equal_summaries(summary, {'supplied_value': '0.000000020000000000', 'collateral_value': '0.000000020000000000', 'borrowed_value': '26.513761400000000000', 'borrow_limit': '0.000000015000000000', 'liquidation_threshold': '0.000000015000000000'})
 
         # Stop exhange rate setting thread
         self.stop_exchange_rate_set = True
