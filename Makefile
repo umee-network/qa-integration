@@ -16,10 +16,12 @@ setup-chain-create-ibc-accs: install-deps build-binary
 	@bash ./scripts/chain/setup_chain.sh 5 true true 	
 
 setup-chain-no-pf: install-deps build-binary
-	@bash ./scripts/chain/setup_chain.sh 3 false
+	@bash ./scripts/chain/setup_chain.sh 5 false
+	@bash ./scripts/chain/start_chain.sh false
 
 setup-chain-no-pf-create-ibc-accs: install-deps build-binary
-	@bash ./scripts/chain/setup_chain.sh 3 false true
+	@bash ./scripts/chain/setup_chain.sh 5 false true
+	@bash ./scripts/chain/start_chain.sh false
 
 # It will setup new chain data to start new chain
 setup-and-start-chain: setup-chain start-chain
@@ -74,12 +76,12 @@ test-send-load: setup-and-start-chain
 	TEST_TYPE=send-load bash ./scripts/tests/send_load.sh
 	$(MAKE) stop-chain
 
-test-leverage-module: setup-chain-no-pf-create-ibc-accs start-chain
+test-leverage-module: setup-chain-no-pf-create-ibc-accs
 	@echo "Running leverage module tests..."
 	TEST_TYPE=leverage-module bash ./scripts/tests/leverage_module.sh
 	$(MAKE) stop-chain
 
-test-oracle-module: setup-chain-no-pf start-chain
+test-oracle-module: setup-chain-no-pf
 	@echo "Running oracle module tests..."
 	TEST_TYPE=oracle-module bash ./scripts/tests/oracle_module.sh
 	$(MAKE) stop-chain

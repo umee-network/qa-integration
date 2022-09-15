@@ -52,7 +52,7 @@ CURRENT_BLOCK_HEIGHT=$($DAEMON status --node $RPC | jq '.SyncInfo.latest_block_h
 echo "INFO: Submitting software upgrade proposal for upgrade: $UPGRADE_NAME"
 $DAEMON tx gov submit-proposal software-upgrade $UPGRADE_NAME --title $UPGRADE_NAME \
     --description upgrade --upgrade-height $((CURRENT_BLOCK_HEIGHT + 80)) --deposit 10000000$DENOM \
-    --from validator1 --yes --keyring-backend test --home $DAEMON_HOME-1 --node $RPC --chain-id $CHAINID
+    --from validator1 --yes --keyring-backend test --home $DAEMON_HOME-1 --node $RPC --chain-id $CHAINID -b block --fees $DEFAULT_FEES
 
 sleep 4s
 
@@ -63,7 +63,7 @@ echo "INFO: Voting on created proposal"
 for (( a=1; a<=$NUM_VALS; a++ ))
 do
     $DAEMON tx gov vote $PROPOSAL_ID yes --from validator$a --yes --keyring-backend test \
-    --home $DAEMON_HOME-$a --node $RPC --chain-id $CHAINID
+    --home $DAEMON_HOME-$a --node $RPC --chain-id $CHAINID -b block --fees $DEFAULT_FEES
 done
 
 echo "INFO: Waiting for proposal to pass and upgrade"
