@@ -91,7 +91,8 @@ test-single-msg: setup-and-start-chain
 	TEST_TYPE=single-msg-load bash ./scripts/tests/single_msg_load.sh
 	$(MAKE) stop-chain
 
-test-upgrade: setup-and-start-chain
+test-upgrade: setup-chain
+	@bash ./scripts/chain/start_chain.sh false
 	@echo "Running upgrade test..."
 	bash ./scripts/tests/test_upgrade.sh $(NUM_VALS)
 	$(MAKE) stop-chain

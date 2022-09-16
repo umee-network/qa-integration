@@ -1,7 +1,7 @@
 
 #!/bin/bash
 
-GOV_DEFAULT_PERIOD="60s"
+GOV_DEFAULT_PERIOD="30s"
 DOWNTIME_JAIL_DURATION="60s"
 UNBONDING_PERIOD="60s"
 EVIDENCE_AGE="60000000000"
@@ -123,7 +123,12 @@ for (( a=1; a<=$NUM_VALS; a++ ))
 do
     eth_addr=${eth_address[($a - 1)]}
     val_addr=$($DAEMON keys show validator$a -a --home $DAEMON_HOME-$a --keyring-backend test)
-    $DAEMON gentx-gravity validator$a 2000000$DENOM $eth_addr $val_addr --chain-id $CHAINID --keyring-backend test --home $DAEMON_HOME-$a
+    if [[ $a -eq 1 ]];then
+        ## For first validator adding commission rate below the min commission rate for checking the v3 upgrade
+        $DAEMON gentx-gravity validator$a 2000000$DENOM $eth_addr $val_addr --commission-rate "0.02" --details "below the minCommisionRate" --chain-id $CHAINID --keyring-backend test --home $DAEMON_HOME-$a
+    else
+        $DAEMON gentx-gravity validator$a 2000000$DENOM $eth_addr $val_addr --commission-rate "0.1" --details "heigher then minCommisionRate" --chain-id $CHAINID --keyring-backend test --home $DAEMON_HOME-$a
+    fi
 done
 
 echo "INFO: Copying all gentxs to $DAEMON_HOME-1"
@@ -189,12 +194,13 @@ do
     LADDR=$((16656 + $INC)) #increment laddr ports
     GRPC=$((9092 + $INC)) #increment grpc poprt
     WGRPC=$((9093 + $INC)) #increment web grpc port
+    PPROF=$((6060 + $INC)) 
     echo "INFO: Updating validator-$a chain config"
     sed -i -e 's#tcp://127.0.0.1:26657#tcp://0.0.0.0:'${RPC}'#g' $DAEMON_HOME-$a/config/config.toml
     sed -i -e 's#tcp://0.0.0.0:26656#tcp://0.0.0.0:'${LADDR}'#g' $DAEMON_HOME-$a/config/config.toml
     sed -i -e 's#persistent_peers =.*$#persistent_peers = "'$PERSISTENT_PEERS'"#' $DAEMON_HOME-$a/config/config.toml
     sed -i -e 's#allow_duplicate_ip =.*$#allow_duplicate_ip = true#' $DAEMON_HOME-$a/config/config.toml
-    sed -i -e 's#pprof_laddr =.*$#pprof_laddr = "localhost:6060"#' $DAEMON_HOME-$a/config/config.toml
+    sed -i -e 's#pprof_laddr =.*$#pprof_laddr = "localhost:'$PPROF'"#' $DAEMON_HOME-$a/config/config.toml
     sed -i -e 's#0.0.0.0:9090#0.0.0.0:'${GRPC}'#g' $DAEMON_HOME-$a/config/app.toml
     sed -i -e 's#0.0.0.0:9091#0.0.0.0:'${WGRPC}'#g' $DAEMON_HOME-$a/config/app.toml
     sed -i -e 's#max_num_inbound_peers =.*$#max_num_inbound_peers = 140#' $DAEMON_HOME-$a/config/config.toml

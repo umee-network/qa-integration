@@ -11,7 +11,6 @@ cd $CURPATH
 
 export REPO=$(basename $GH_URL .git)
 
-go env 
 DAEMON_EXISTS=""
 CURR_VERSION=""
 echo "INFO: Checking $DAEMON is installed or not"
@@ -27,9 +26,11 @@ then
     echo "INFO: Installing $DAEMON"
     if [ ! -d $REPO ]
     then
-        git clone -b $CHAIN_VERSION --single-branch $GH_URL $REPO
+        git clone $GH_URL $REPO
     fi
     cd $REPO
+    git fetch --all && git checkout $CHAIN_VERSION
+    git branch --show-current 
     echo PWD: $(pwd)
     make install
 
