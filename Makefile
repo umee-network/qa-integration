@@ -91,7 +91,10 @@ test-single-msg: setup-and-start-chain
 	TEST_TYPE=single-msg-load bash ./scripts/tests/single_msg_load.sh
 	$(MAKE) stop-chain
 
-test-upgrade: setup-chain
+test-upgrade: 
+	@echo "\nCHAIN_VERSION='v1.1.2'" >> env-umee
+	@echo "UPGRADE_VERSION='main'" >> env-umee
+	$(MAKE) setup-chain
 	@bash ./scripts/chain/start_chain.sh false
 	@echo "Running upgrade test..."
 	bash ./scripts/tests/test_upgrade.sh $(NUM_VALS)

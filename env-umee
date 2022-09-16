@@ -4,7 +4,7 @@ DENOM=uumee
 CHAINID=test
 DAEMON_HOME=${HOME}/.qa-integration/umeed
 GH_URL=https://github.com/umee-network/umee
-CHAIN_VERSION='v1.1.2'
+CHAIN_VERSION='main'
 IS_PUBLIC=false
 LOG_LEVEL=info
 UPGRADE_NAME='v1.1-v3.0'
@@ -17,3 +17,6 @@ DB_NAME=qa_test
 NUM_VALS=3
 UPGRADE_WAITING_TIME=10
 DEFAULT_FEES=100000uumee
+
+CHAIN_VERSION='v1.1.2'
+UPGRADE_VERSION='main'
