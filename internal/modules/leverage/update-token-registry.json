@@ -18,7 +18,7 @@
       "enable_msg_borrow": true,
       "blacklist": false,
       "max_collateral_share": "1.000000000000000000",
-      "max_supply_utilization": "0.750000000000000000",
+      "max_supply_utilization": "1.000000000000000000",
       "min_collateral_liquidity": "0.000000000000000000"
     },
     {
@@ -37,7 +37,7 @@
       "enable_msg_borrow": true,
       "blacklist": false,
       "max_collateral_share": "1.000000000000000000",
-      "max_supply_utilization": "0.750000000000000000",
+      "max_supply_utilization": "1.000000000000000000",
       "min_collateral_liquidity": "0.000000000000000000"
     },
     {
@@ -56,7 +56,7 @@
       "enable_msg_borrow": true,
       "blacklist": false,
       "max_collateral_share": "1.000000000000000000",
-      "max_supply_utilization": "0.750000000000000000",
+      "max_supply_utilization": "1.000000000000000000",
       "min_collateral_liquidity": "0.000000000000000000"
     }
   ]
