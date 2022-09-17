@@ -1,3 +1,5 @@
+import statistics
+
 class ExchangeRate:
     def __init__(self, denom, price):
         self.denom = denom
@@ -24,3 +26,17 @@ class ExchangeRates:
         return "0.00"
     def Len(self):
         return len(self.rates)
+    
+    
+def median_rates(exchange_rates_set):
+    collected_rates = {}
+    for exchange_rates in exchange_rates_set:
+        for rate in exchange_rates.rates:
+            if rate.denom in collected_rates:
+                collected_rates[rate.denom].append(float(rate.price))
+            else:
+                collected_rates[rate.denom] = [float(rate.price)]
+    median_rates = {}
+    for denom, rates in collected_rates.items():
+        median_rates[denom] = statistics.median(rates)
+    return median_rates

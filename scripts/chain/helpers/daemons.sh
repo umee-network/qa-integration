@@ -21,16 +21,6 @@ start_umeed() {
   else
     start_umeed_pid $VAL_NUM
   fi
-  echo "waiting for umeed start"
-  sleep 3
-
-  DIFF=$(($VAL_NUM - 1))
-  INC=$(($DIFF * 2))
-  RPC=$((16657 + $INC))
-
-  echo "INFO: Checking $DAEMON_HOME-${VAL_NUM} chain status"
-  echo "Executing: $DAEMON status --node tcp://localhost:${RPC}"
-  $DAEMON status --node tcp://localhost:${RPC}
 }
 
 start_price_feeder() {
@@ -152,7 +142,7 @@ start_umeed_pid() {
   echo $! > $pid_path
   pid_value=$(cat $pid_path)
 
-  echo "--- Starting price-feeder..."
+  echo "--- Starting umeed..."
   echo
   echo "Logs:"
   echo "  * tail -f $log_path"
