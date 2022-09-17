@@ -335,9 +335,9 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         exchange_rate_set_thread3.join()
 
     GH Issue: https://github.com/umee-network/umee/issues/1207
-    Collateral weight and liquidation threshold is set to 0.75 so that borrow limit
-    for each account is 150 usd when supply and collateralizing 200 usd. Borrow rates
-    are set to 0 to make tracking changing balances simpler
+    # Collateral weight and liquidation threshold is set to 0.75 so that borrow limit
+    # for each account is 150 usd when supply and collateralizing 200 usd. Borrow rates
+    # are set to 0 to make tracking changing balances simpler
     def test_functional_one(self):
         # Submit exhange rates to price feeder every voting period in the background
         exchange_rate_set_thread1 = threading.Thread(target=self.exchange_rate_set, args=(EXCHANGE_RATES, validator1_val, validator1_home))
