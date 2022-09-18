@@ -60,7 +60,8 @@ then
     cd $REPO
     git fetch --all && git checkout $CHAIN_VERSION
     echo PWD: $(pwd)
-    make build && make install
+    LIQUIDATOR=true make build
+    LIQUIDATOR=true make install
 
     echo "Installing price-feeder binary"
     cd ./price-feeder/
@@ -147,7 +148,7 @@ fi
 
 if $CREATE_IBC_ACCOUNTS; then
     echo "Adding IBC genesis accounts"
-    for (( a=1; a<=800; a++ ))
+    for (( a=1; a<=1001; a++ ))
     do
         $DAEMON keys add "a_${a}" --keyring-backend test --home $DAEMON_HOME-1
         $DAEMON --home $DAEMON_HOME-1 add-genesis-account $($DAEMON keys show a_$a -a --home $DAEMON_HOME-1 --keyring-backend test) 1000000000000$DENOM,10000000000ibc/atom,20000000000ibc/juno
