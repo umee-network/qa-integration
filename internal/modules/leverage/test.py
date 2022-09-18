@@ -134,11 +134,10 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
                 break
 
     def assert_equal_balances(self, acc_balance, denom_amounts):
-        i = 0
         for denom, amount in denom_amounts.items():
-            self.assertEqual(acc_balance["balances"][i]["denom"], denom)
-            self.assertEqual(acc_balance["balances"][i]["amount"], amount)
-            i+=1
+            for balance in acc_balance["balances"]:
+                if balance["denom"] == denom:
+                    self.assertEqual(balance["amount"], amount)
 
     def assert_equal_summaries(self, acc_summary, summary_amounts):
         self.assertEqual(acc_summary["supplied_value"], summary_amounts["supplied_value"])
@@ -176,12 +175,12 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
             status = tx_withdraw(accounts[0]["name"], "1000000u/uumee", validator1_home)
             self.assertTrue(status)
 
-    def test_query_total_supply(self):
+    def test_query_registered_tokens(self):
         status, res = query_registered_tokens()
         self.assertTrue(status)
-        self.assertTrue(len(res['registry']) == 3, "It should have three tokens registered")
+        self.assertEqual(len(res['registry']), 3, "It should have three tokens registered")
 
-    GH Issue: https://github.com/umee-network/umee/issues/1307
+    # GH Issue: https://github.com/umee-network/umee/issues/1307
     def test_supply_withdraw(self):
         # Query User A bank balance of uumee
         status, acc1_balance = query_balances(accounts1[0]["address"])
@@ -197,7 +196,7 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         status, acc1_balance = query_balances(accounts1[0]["address"])
         self.assertTrue(status)
         print("\nAcc1 balances after supplying 500000 umee: ", acc1_balance["balances"])
-        self.assert_equal_balances(acc1_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','u/uumee':'500000000000','uumee':'500000000000'})
+        self.assert_equal_balances(acc1_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','u/uumee':'500000000000'})
 
         # User A withdraws between 10% and 90% of their u/uumee balance
         status = tx_withdraw(accounts1[0]["name"], "500000000000u/uumee", validator1_home)
@@ -207,14 +206,14 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         status, acc1_balance = query_balances(accounts1[0]["address"])
         self.assertTrue(status)
         print("\nAcc1 balances after withdrawing 500000 u/umee: ", acc1_balance["balances"])
-        self.assert_equal_balances(acc1_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'1000000000000'})
+        self.assert_equal_balances(acc1_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'999999800000'})
 
     def test_supply_withdraw_atom(self):
         # Query User A bank balance of atom
         status, acc1_balance = query_balances(accounts1[0]["address"])
         self.assertTrue(status)
         print("\nAcc1 balances at start of supply/withdraw atom test: ", acc1_balance["balances"])
-        self.assert_equal_balances(acc1_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'1000000000000'})
+        self.assert_equal_balances(acc1_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000'})
 
         # User A supplies between 10% and 90% of their atom balance
         status = tx_supply(accounts1[0]["name"], "5000000000ibc/atom", validator1_home)
@@ -224,7 +223,7 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         status, acc1_balance = query_balances(accounts1[0]["address"])
         self.assertTrue(status)
         print("\nAcc1 balances after supplying 5000 atom: ", acc1_balance["balances"])
-        self.assert_equal_balances(acc1_balance, {'ibc/atom':'5000000000','ibc/juno':'20000000000','u/ibc/atom':'5000000000','uumee':'1000000000000'})
+        self.assert_equal_balances(acc1_balance, {'ibc/atom':'5000000000','ibc/juno':'20000000000','u/ibc/atom':'5000000000'})
 
         # User A withdraws between 10% and 90% of their u/ibc/atom balance
         status = tx_withdraw(accounts1[0]["name"], "5000000000u/ibc/atom", validator1_home)
@@ -234,7 +233,7 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         status, acc1_balance = query_balances(accounts1[0]["address"])
         self.assertTrue(status)
         print("\nAcc1 balances after withdrawing 5000 u/atom: ", acc1_balance["balances"])
-        self.assert_equal_balances(acc1_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'1000000000000'})
+        self.assert_equal_balances(acc1_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000'})
 
     # GH Issue: https://github.com/umee-network/umee/issues/1210
     def test_simple_functional(self):
@@ -251,7 +250,7 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         status, acc1_balance = query_balances(accounts1[0]["address"])
         self.assertTrue(status)
         print("\nAcc1 balances at start of simple functional test: ", acc1_balance["balances"])
-        self.assert_equal_balances(acc1_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'1000000000000'})
+        self.assert_equal_balances(acc1_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'999999600000'})
         status, acc2_balance = query_balances(accounts1[1]["address"])
         self.assertTrue(status)
         print("\nAcc2 balances at start of simple functional test: ", acc2_balance["balances"])
@@ -271,11 +270,11 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         status, acc1_balance = query_balances(accounts1[0]["address"])
         self.assertTrue(status)
         print("\nAcc1 balances after supplying and collateralizing 10000 umee: ", acc1_balance["balances"])
-        self.assert_equal_balances(acc1_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'990000000000'})
+        self.assert_equal_balances(acc1_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'989999400000'})
         status, acc2_balance = query_balances(accounts1[1]["address"])
         self.assertTrue(status)
         print("\nAcc2 balances after supplying 2 atom: ", acc2_balance["balances"])
-        self.assert_equal_balances(acc2_balance, {'ibc/atom':'9998000000','ibc/juno':'20000000000','u/ibc/atom':'2000000','uumee':'1000000000000'})
+        self.assert_equal_balances(acc2_balance, {'ibc/atom':'9998000000','ibc/juno':'20000000000','u/ibc/atom':'2000000'})
 
         # User A borrows 1 atom
         status = tx_borrow(accounts1[0]["name"], "1000000ibc/atom", validator1_home)
@@ -288,11 +287,11 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         status, acc1_balance = query_balances(accounts1[0]["address"])
         self.assertTrue(status)
         print("\nAcc1 balances after borrowing 1 atom: ", acc1_balance["balances"])
-        self.assert_equal_balances(acc1_balance, {'ibc/atom':'10001000000','ibc/juno':'20000000000','uumee':'990000000000'})
+        self.assert_equal_balances(acc1_balance, {'ibc/atom':'10001000000','ibc/juno':'20000000000'})
         status, acc2_balance = query_balances(accounts1[1]["address"])
         self.assertTrue(status)
         print("\nAcc2 balances after withdrawing 1 u/atom: ", acc2_balance["balances"])
-        self.assert_equal_balances(acc2_balance, {'ibc/atom':'9999000000','ibc/juno':'20000000000','u/ibc/atom':'1000000','uumee':'1000000000000'})
+        self.assert_equal_balances(acc2_balance, {'ibc/atom':'9999000000','ibc/juno':'20000000000','u/ibc/atom':'1000000'})
 
         # User A pays back 1 atom
         status = tx_repay(accounts1[0]["name"], "1000000ibc/atom", validator1_home)
@@ -301,11 +300,11 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         status, acc1_balance = query_balances(accounts1[0]["address"])
         self.assertTrue(status)
         print("\nAcc1 balances after repaying 1 atom: ", acc1_balance["balances"])
-        self.assert_equal_balances(acc1_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'990000000000'})
+        self.assert_equal_balances(acc1_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000'})
         status, acc2_balance = query_balances(accounts1[1]["address"])
         self.assertTrue(status)
         print("\nAcc2 balances after acc1 repaid 1 atom: ", acc2_balance["balances"])
-        self.assert_equal_balances(acc2_balance, {'ibc/atom':'9999000000','ibc/juno':'20000000000','u/ibc/atom':'1000000','uumee':'1000000000000'})
+        self.assert_equal_balances(acc2_balance, {'ibc/atom':'9999000000','ibc/juno':'20000000000','u/ibc/atom':'1000000'})
 
         # Restore initial balances for User A and User B
         # User A decollateralizes and withdraws 10000 umee
@@ -321,12 +320,11 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         status, acc1_balance = query_balances(accounts1[0]["address"])
         self.assertTrue(status)
         print("\nAcc1 balances at end of simple functional test: ", acc1_balance["balances"])
-        self.assert_equal_balances(acc1_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'1000000000000'})
+        self.assert_equal_balances(acc1_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'999999000000'})
         status, acc2_balance = query_balances(accounts1[1]["address"])
         self.assertTrue(status)
         print("\nAcc2 balances at end of simple functional test: ", acc2_balance["balances"])
-        self.assert_equal_balances(acc2_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'1000000000000'})
-
+        self.assert_equal_balances(acc2_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'999999700000'})
 
         # Stop exhange rate setting thread
         self.stop_exchange_rate_set = True
@@ -334,7 +332,7 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         exchange_rate_set_thread2.join()
         exchange_rate_set_thread3.join()
 
-    GH Issue: https://github.com/umee-network/umee/issues/1207
+    # GH Issue: https://github.com/umee-network/umee/issues/1207
     # Collateral weight and liquidation threshold is set to 0.75 so that borrow limit
     # for each account is 150 usd when supply and collateralizing 200 usd. Borrow rates
     # are set to 0 to make tracking changing balances simpler
@@ -386,7 +384,7 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         for i in range(0,50):
             status, acc_balance = query_balances(accounts1[i]["address"])
             self.assertTrue(status)
-            self.assert_equal_balances(acc_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'990000000000'})
+            self.assert_equal_balances(acc_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','u/uumee':'990000000000'})
         for i in range(50,100):
             status, acc_balance = query_balances(accounts1[i]["address"])
             self.assertTrue(status)
@@ -630,7 +628,7 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         for i in range(0,50):
             status, acc_balance = query_balances(accounts2[i]["address"])
             self.assertTrue(status)
-            self.assert_equal_balances(acc_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'960000000000'})
+            self.assert_equal_balances(acc_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'959999800000'})
         for i in range(50,100):
             status, acc_balance = query_balances(accounts2[i]["address"])
             self.assertTrue(status)
@@ -650,11 +648,11 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         for i in range(0,50):
             status, acc_balance = query_balances(accounts2[i]["address"])
             self.assertTrue(status)
-            self.assert_equal_balances(acc_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'960000000000'})
+            self.assert_equal_balances(acc_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'959999800000'})
         for i in range(50,100):
             status, acc_balance = query_balances(accounts2[i]["address"])
             self.assertTrue(status)
-            self.assert_equal_balances(acc_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'960000000000'})
+            self.assert_equal_balances(acc_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'959999800000'})
         for i in range(100,200):
             status, acc_balance = query_balances(accounts2[i]["address"])
             self.assertTrue(status)
@@ -685,19 +683,19 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         for i in range(0,20):
             status, acc_balance = query_balances(accounts2[i]["address"])
             self.assertTrue(status)
-            self.assert_equal_balances(acc_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'960000000000'})
+            self.assert_equal_balances(acc_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'959999800000'})
         for i in range(20,40):
             status, acc_balance = query_balances(accounts2[i]["address"])
             self.assertTrue(status)
-            self.assert_equal_balances(acc_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'960000000000'})
+            self.assert_equal_balances(acc_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'959999800000'})
         for i in range(40,60):
             status, acc_balance = query_balances(accounts2[i]["address"])
             self.assertTrue(status)
-            self.assert_equal_balances(acc_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'960000000000'})
+            self.assert_equal_balances(acc_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'959999800000'})
         for i in range(60,100):
             status, acc_balance = query_balances(accounts2[i]["address"])
             self.assertTrue(status)
-            self.assert_equal_balances(acc_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'960000000000'})
+            self.assert_equal_balances(acc_balance, {'ibc/atom':'10000000000','ibc/juno':'20000000000','uumee':'959999800000'})
         for i in range(100,200):
             status, acc_balance = query_balances(accounts2[i]["address"])
             self.assertTrue(status)
