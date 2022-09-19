@@ -775,7 +775,7 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
             self.assertTrue(status)
             print(f'Account summary for account{i+1} after liquidations: {summary}')
             self.assert_equal_summaries(summary, {'supplied_value': '5000.000000000000000000', 'collateral_value': '5000.000000000000000000', 'borrowed_value': '0.000000000000000000', 'borrow_limit': '3750.000000000000000000', 'liquidation_threshold': '3750.000000000000000000'})
-        for i in range(21,50):
+        for i in range(21,39):
             status, acc_balance = query_balances(accounts2[i]["address"])
             self.assertTrue(status)
             print(f'Acc_balance for account{i+1}: {acc_balance}')
@@ -783,7 +783,21 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
             self.assertTrue(status)
             print(f'Acc_balance for liquidator{i+1}: {liq_balance}')
             self.assert_equal_balances(acc_balance, {'ibc/juno':'20000000000','uumee':'989999800000'})
-            self.assert_equal_balances(liq_balance, {'ibc/juno':'20000000000','uumee':'999999900000'})
+            self.assert_equal_balances(liq_balance, {'ibc/juno':'20000000000','uumee':'1009999800000'})
+
+            status, summary = query_account_summary(accounts2[i]["address"])
+            self.assertTrue(status)
+            print(f'Account summary for account{i+1} after liquidations: {summary}')
+            self.assert_equal_summaries(summary, {'supplied_value': '5000.000000000000000000', 'collateral_value': '5000.000000000000000000', 'borrowed_value': '0.000000000000000000', 'borrow_limit': '3750.000000000000000000', 'liquidation_threshold': '3750.000000000000000000'})
+        for i in range(40,49):
+            status, acc_balance = query_balances(accounts2[i]["address"])
+            self.assertTrue(status)
+            print(f'Acc_balance for account{i+1}: {acc_balance}')
+            status, liq_balance = query_balances(liquidators1[i]["address"])
+            self.assertTrue(status)
+            print(f'Acc_balance for liquidator{i+1}: {liq_balance}')
+            self.assert_equal_balances(acc_balance, {'ibc/juno':'20000000000','uumee':'989999800000'})
+            self.assert_equal_balances(liq_balance, {'ibc/juno':'20000000000','u/uumee':'1009999800000'})
 
             status, summary = query_account_summary(accounts2[i]["address"])
             self.assertTrue(status)
@@ -796,8 +810,8 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
             status, liq_balance = query_balances(liquidators1[i]["address"])
             self.assertTrue(status)
             print(f'Acc_balance for liquidator{i+1}: {liq_balance}')
-            self.assert_equal_balances(acc_balance, {'ibc/juno':'20000000000','uumee':'989998000000'})
-            self.assert_equal_balances(liq_balance, {'ibc/juno':'20000000000','uumee':'999999900000'})
+            self.assert_equal_balances(acc_balance, {'u/uumee':'989998000000'})
+            self.assert_equal_balances(liq_balance, {'u/uumee':'999999900000'})
 
             status, summary = query_account_summary(accounts2[i]["address"])
             self.assertTrue(status)
