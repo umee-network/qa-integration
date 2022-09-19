@@ -738,10 +738,6 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         exchange_rate_set_thread3.start()
         time.sleep(20)
 
-        status, targets = query_liquidation_targets()
-        self.assertTrue(status)
-        self.assertEqual(len(targets['targets']), 28, "There should be 28 accounts able to be liquidated")
-
         # Query account summaries before liquidations
         for i in range(0,100):
             status, summary = query_account_summary(accounts2[i]["address"])
