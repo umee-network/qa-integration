@@ -481,7 +481,7 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
 
         status, targets = query_liquidation_targets()
         self.assertTrue(status)
-        self.assertEqual(len(targets['targets']), 78, "There should be 78 accounts able to be liquidated (i.e. acount22 - acount100)")  # Lastt
+        self.assertEqual(len(targets['targets']), 78, "There should be 78 accounts able to be liquidated (i.e. acount22 - acount100)")
 
         for t in targets['targets']:
             status, summary = query_account_summary(t)
