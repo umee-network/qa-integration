@@ -481,7 +481,7 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
 
         status, targets = query_liquidation_targets()
         self.assertTrue(status)
-        self.assertEqual(len(targets['targets']), 78, "There should be 78 accounts able to be liquidated (i.e. acount22 - acount100)")  # Lastt
+        self.assertEqual(len(targets['targets']), 78, "There should be 78 accounts able to be liquidated (i.e. acount22 - acount100)")
 
         for t in targets['targets']:
             status, summary = query_account_summary(t)
@@ -720,7 +720,7 @@ class TestLeverageModuleTxsQueries(unittest.TestCase):
         for i in range(60,100):
             status, acc_balance = query_balances(accounts2[i]["address"])
             self.assertTrue(status)
-            self.assert_equal_balances(acc_balance, {'ibc/juno':'20000000000','uumee':'989998000000'}) #lasttt
+            self.assert_equal_balances(acc_balance, {'ibc/juno':'20000000000','uumee':'989998000000'})
 
         # Stop exhange rate setting thread
         self.stop_exchange_rate_set = True
