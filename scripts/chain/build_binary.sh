@@ -5,6 +5,7 @@
 # get absolute parent directory path of current file
 CURPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 cd $CURPATH
+EXPERIMENTAL=$1
 
 # check environment variables are set
 . ../deps/env-check.sh
@@ -32,7 +33,7 @@ then
     git fetch --all && git checkout $CHAIN_VERSION
     git branch --show-current 
     echo PWD: $(pwd)
-    make install
+    EXPERIMENTAL=$EXPERIMENTAL make install
 
     echo "Installing price-feeder binary"
     cd ./price-feeder/

@@ -7,7 +7,10 @@ install-deps:
 	@bash ./scripts/deps/prereq.sh
 	
 build-binary:
-	@bash ./scripts/chain/build_binary.sh
+	@bash ./scripts/chain/build_binary.sh false
+
+build-experimental-binary:
+	@bash ./scripts/chain/build_binary.sh true
 
 setup-chain: install-deps build-binary
 	@bash ./scripts/chain/setup_chain.sh 5
@@ -99,3 +102,7 @@ test-upgrade:
 	@echo "Running upgrade test..."
 	bash ./scripts/tests/test_upgrade.sh $(NUM_VALS)
 	$(MAKE) stop-chain
+
+test-ibc: build-experimental-binary
+	@echo "Testing ibc-transfer quota with supported and unsupported denoms..."
+	bash ./scripts/tests/test_ibc.sh

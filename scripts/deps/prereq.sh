@@ -130,3 +130,10 @@ else
     sudo systemctl start mongod
   fi
 fi
+
+# Installing rust for ibc relayer (hermes) (https://hermes.informal.systems/quick-start/installation.html)
+if command_exists cargo ; then 
+  echo "Rust is already installed"
+else
+  curl https://sh.rustup.rs -sSf | sh
+fi

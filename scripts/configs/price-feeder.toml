@@ -1,5 +1,4 @@
-gas_adjustment = 1.5
-provider_timeout = "5000ms"
+gas_adjustment = 1
 
 [server]
 listen_addr = "0.0.0.0:$PF_PORT"
@@ -7,31 +6,49 @@ read_timeout = "20s"
 verbose_cors = true
 write_timeout = "20s"
 
+[[deviation_thresholds]]
+base = "USDT"
+threshold = "1.5"
+
+[[deviation_thresholds]]
+base = "UMEE"
+threshold = "1.5"
+
+[[deviation_thresholds]]
+base = "ATOM"
+threshold = "1.5"
+
 [[currency_pairs]]
 base = "UMEE"
 providers = [
-"mock",
+  "okx",
+  "gate",
+  "mexc",
+]
+quote = "USDT"
+
+[[currency_pairs]]
+base = "USDT"
+providers = [
+  "kraken",
+  "coinbase",
+  "binanceus",
+]
+quote = "USD"
+
+[[currency_pairs]]
+base = "ATOM"
+providers = [
+  "okx",
+  "bitget",
 ]
 quote = "USDT"
 
 [[currency_pairs]]
 base = "ATOM"
 providers = [
-"mock",
-]
-quote = "USDC"
-
-[[currency_pairs]]
-base = "USDC"
-providers = [
-"mock",
-]
-quote = "USD"
-
-[[currency_pairs]]
-base = "USDT"
-providers = [
-"mock",
+  "kraken",
+  "binanceus",
 ]
 quote = "USD"
 
@@ -57,3 +74,13 @@ enable-hostname-label = true
 enable-service-label = true
 type = "prometheus"
 global-labels = [["chain-id", "test"]]
+
+[[provider_endpoints]]
+name = "binance"
+rest = "https://api1.binance.com"
+websocket = "stream.binance.com:9443"
+
+[[provider_endpoints]]
+name = "osmosisv2"
+rest = "https://api.osmo-api.prod.network.umee.cc"
+websocket = "api.osmo-api.prod.network.umee.cc"
