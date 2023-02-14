@@ -32,7 +32,6 @@ def record_stat(test_type, cmd_type, output, err):
         err (_str_): _bool_
     """
     if err:
-        logging.error("ERROR: %s", err)
         stat = {
             "test_type": test_type,
             "cmd_type": cmd_type,
@@ -47,7 +46,6 @@ def record_stat(test_type, cmd_type, output, err):
     out = json.loads(output)
     if isinstance(out, dict) and "code" in out:
         if out["code"] != 0:
-            logging.error("ERROR: %s", out)
             error_type = out["raw_log"]
             split_raw_log = error_type.split(":")
             if len(split_raw_log) > 0:
