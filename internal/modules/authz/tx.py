@@ -11,6 +11,8 @@ HOME = env.HOME
 DAEMON_HOME = env.DAEMON_HOME
 RPC = env.RPC
 DEFAULT_GAS = env.DEFAULT_GAS
+DEFAULT_FEES = env.DEFAULT_FEES
+
 
 # `execute_authz_tx` takes the granter_key and tx_file as parameters and executes the authz exec tx
 # internally and returns the json.
@@ -19,7 +21,7 @@ def execute_authz_tx(
     tx_file,
     gas=DEFAULT_GAS,
 ):
-    command = f"{DAEMON} tx authz exec {tx_file} --from {grantee_key} --chain-id {CHAINID} --keyring-backend test --home {DAEMON_HOME}-1 --node {RPC} --output json -y --gas {gas}"
+    command = f"{DAEMON} tx authz exec {tx_file} --from {grantee_key} --chain-id {CHAINID} --keyring-backend test --home {DAEMON_HOME}-1 --node {RPC} --output json -y --gas {gas} --fees {DEFAULT_FEES}"
     return exec_command(command)
 
 
@@ -30,7 +32,7 @@ def tx_grant_authz(
     grantee,
     gas=DEFAULT_GAS,
 ):
-    command = f"{DAEMON} tx authz grant {grantee} send --spend-limit 100stake --from {granter} --chain-id {CHAINID} --keyring-backend test --home {DAEMON_HOME}-1 --node {RPC} --output json -y --gas {gas}"
+    command = f"{DAEMON} tx authz grant {grantee} send --spend-limit 100stake --from {granter} --chain-id {CHAINID} --keyring-backend test --home {DAEMON_HOME}-1 --node {RPC} --output json -y --gas {gas} --fees {DEFAULT_FEES}"
     return exec_command(command)
 
 
@@ -41,7 +43,7 @@ def tx_revoke_authz(
     grantee,
     gas=DEFAULT_GAS,
 ):
-    command = f"{DAEMON} tx authz revoke {grantee} /cosmos.bank.v1beta1.MsgSend --from {granter} --chain-id {CHAINID} --keyring-backend test --home {DAEMON_HOME}-1 --node {RPC} --output json -y --gas {gas}"
+    command = f"{DAEMON} tx authz revoke {grantee} /cosmos.bank.v1beta1.MsgSend --from {granter} --chain-id {CHAINID} --keyring-backend test --home {DAEMON_HOME}-1 --node {RPC} --output json -y --gas {gas} --fees {DEFAULT_FEES}"
     return exec_command(command)
 
 

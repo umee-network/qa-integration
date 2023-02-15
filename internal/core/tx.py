@@ -9,6 +9,7 @@ DAEMON = env.DAEMON
 DAEMON_HOME = env.DAEMON_HOME
 HOME = env.HOME
 RPC = env.RPC
+FEES = env.DEFAULT_FEES
 
 
 def tx_sign(unsigned_file_name, from_address, sequence, gas="auto"):
@@ -28,7 +29,8 @@ def tx_sign(unsigned_file_name, from_address, sequence, gas="auto"):
     command = f"""{DAEMON} tx sign {HOME}/{unsigned_file_name} --from {from_address} \
 --chain-id {CHAINID} --keyring-backend test \
 --home {DAEMON_HOME}-1 --node {RPC} --signature-only=false \
---sequence {sequence} --gas {gas} --output json"""
+--sequence {sequence} --gas {gas} --output json --fees {FEES}"""
+    
     return exec_command(command)
 
 
@@ -52,5 +54,6 @@ def tx_broadcast(signed_file, gas, broadcast_mode="sync"):
     if broadcast_mode == "block":
         logging.info("Waiting for transaction for being broadcasted")
     command = f"""{DAEMON} tx broadcast {HOME}/{signed_file} --output json \
---chain-id {CHAINID} --gas {gas} --node {RPC} --broadcast-mode {broadcast_mode}"""
+--chain-id {CHAINID} --gas {gas} --node {RPC} --broadcast-mode {broadcast_mode} --fees {FEES}"""
+    
     return exec_command(command)

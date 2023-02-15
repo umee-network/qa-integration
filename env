@@ -13,4 +13,4 @@ RPC="http://localhost:16657"
 MONGO_URL="mongodb://localhost:27017/"
 DB_NAME=qa_test
 NUM_VALS=3
-UPGRADE_WAITING_TIME='10s'
+UPGRADE_WAITING_TIME=10

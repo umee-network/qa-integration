@@ -2,7 +2,7 @@ from asyncio import as_completed
 import concurrent.futures
 from time import sleep
 from threading import Thread
-from utils import env, exec_command
+from utils import env, http_get_req
 
 DAEMON = env.DAEMON
 NUM_VALS = env.NUM_VALS
@@ -14,12 +14,12 @@ NUM_RETRIES = 10
 def wait_for_node_status(rpc_url, val_num):
     for i in range(NUM_RETRIES):
         sleep(3)
-        command = f"{DAEMON} status --node {rpc_url}"
-        status, response = exec_command(command)
-        if not status:
+        status_url = f"{rpc_url}/status"
+        status, response = http_get_req(status_url)
+        if not status :
             print(f"validator{val_num} node {rpc_url} is not responding: waiting 3 seconds; {NUM_RETRIES-i-1} tries remaining")
             continue
-        block_height = int(response['SyncInfo']['latest_block_height'])
+        block_height = int(response['result']['sync_info']['latest_block_height'])
         if block_height > 0:
             print(f"validator{val_num} node {rpc_url} online with block_height: {block_height}")
             return True, ""

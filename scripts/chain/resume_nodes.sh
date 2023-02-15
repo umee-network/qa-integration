@@ -11,6 +11,10 @@ cd $CURPATH
 # check environment variables are set
 . ../deps/env-check.sh
 
+# load helper funcs 
+. $CURPATH/helpers/services.sh
+. $CURPATH/helpers/daemons.sh
+
 echo "INFO: Number of validator nodes to be resumed: $NUM_VALS"
 echo "---------- Restarting systemd service files --------"
 for (( a=1; a<=$NUM_VALS; a++ ))

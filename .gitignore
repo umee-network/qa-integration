@@ -3,3 +3,5 @@ __pycache__
 .vscode
 stats.txt
 .DS_Store
+data
+umee

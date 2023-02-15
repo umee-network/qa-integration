@@ -1,10 +1,13 @@
 """
 This module contains all util functions.
 """
+from cmath import exp
 import json
 import logging
 import subprocess
+import requests
 from shutil import which
+from this import d
 from utils import env
 
 from stats import record_stat, TX_TYPE, QUERY_TYPE
@@ -17,6 +20,18 @@ DAEMON = env.DAEMON
 DAEMON_HOME = env.DAEMON_HOME
 DEFAULT_GAS = env.DEFAULT_GAS
 
+def http_get_req(url):
+    """
+    This functions just make get http call and returns response in json
+    """
+    try:
+        r = requests.get(url)
+        if r.status_code == 200:
+            return True, r.json()
+        else:
+            return True, None
+    except:
+        return False, None
 
 def print_balance_deductions(wallet, diff):
     """

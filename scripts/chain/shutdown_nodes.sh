@@ -1,4 +1,4 @@
-#/bin/sh
+#!/bin/bash
 
 ## This script stops the systemd process of the nodes and removes their data directories.
 
@@ -26,16 +26,6 @@ do
 
     kill_process $DAEMON_HOME-${a}/pid.${DAEMON}
     kill_process $DAEMON_HOME-${a}/pid.pf
-done
-
-echo "------- Running unsafe reset all ---------"
-for (( a=1; a<=$NUM_VALS; a++ ))
-do
-    if command_exists $DAEMON ; then
-        $DAEMON tendermint unsafe-reset-all  --home $DAEMON_HOME-$a
-        echo "-- Executed $DAEMON unsafe-reset-all  --home $DAEMON_HOME-$a --"
-    fi
-    rm -rf $DAEMON_HOME-$a
 done
 
 if command_exists systemctl ; then
