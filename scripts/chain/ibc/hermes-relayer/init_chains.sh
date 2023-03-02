@@ -76,6 +76,7 @@ $BINARY add-genesis-account $($BINARY --home $CHAIN_DIR/$CHAINID_2 keys show rly
 echo "Creating and collecting gentx..."
 $BINARY gentx-gravity val1 7000000000uumee 0x0Ca2adaC7e34EF5db8234bE1182070CD980273E8 umee1s9lg2vpjrwmyn93ftzkpkr750xjwzdp7a6e97h --home $CHAIN_DIR/$CHAINID_1 --chain-id $CHAINID_1 --keyring-backend test
 $BINARY gentx-gravity val2 7000000000uumee 0x17B9E914a10f0b1Cf4684781fBaC9358e56d0282 umee1yfrk6yw6uwu8srhd6txz5rec7rsxpjnvdtztxx --home $CHAIN_DIR/$CHAINID_2 --chain-id $CHAINID_2 --keyring-backend test
+
 $BINARY collect-gentxs --home $CHAIN_DIR/$CHAINID_1
 $BINARY collect-gentxs --home $CHAIN_DIR/$CHAINID_2
 $BINARY validate-genesis --home $CHAIN_DIR/$CHAINID_1
@@ -108,7 +109,19 @@ sed -i -e 's/minimum-gas-prices = ""/minimum-gas-prices = "0.0001uumee"/g' $CHAI
 echo "Changing the uibc params for testing... TOKEN_QUOTA=100"
 jq .app_state.uibc.params.token_quota=\"100\" $CHAIN_DIR/$CHAINID_1/config/genesis.json > /tmp/genesis.json
 mv /tmp/genesis.json $CHAIN_DIR/$CHAINID_1/config/genesis.json
+
+jq .app_state.uibc.params.quota_duration=\"60s\" $CHAIN_DIR/$CHAINID_1/config/genesis.json > /tmp/genesis.json
+mv /tmp/genesis.json $CHAIN_DIR/$CHAINID_1/config/genesis.json
+
+jq .app_state.oracle.params.historic_stamp_period=\"20\" $CHAIN_DIR/$CHAINID_1/config/genesis.json > /tmp/genesis.json
+mv /tmp/genesis.json $CHAIN_DIR/$CHAINID_1/config/genesis.json
+
+jq .app_state.oracle.params.vote_period=\"20\" $CHAIN_DIR/$CHAINID_1/config/genesis.json > /tmp/genesis.json
+mv /tmp/genesis.json $CHAIN_DIR/$CHAINID_1/config/genesis.json
+
 echo "new token_quota => $(jq .app_state.uibc.params.token_quota $CHAIN_DIR/$CHAINID_1/config/genesis.json)"
+echo "new historic_stamp_period => $(jq .app_state.oracle.params.historic_stamp_period $CHAIN_DIR/$CHAINID_1/config/genesis.json)"
+echo "new vote_period => $(jq .app_state.oracle.params.vote_period $CHAIN_DIR/$CHAINID_1/config/genesis.json)"
 
 
 price_feeder_set_config() {
@@ -123,7 +136,7 @@ price_feeder_set_config() {
     cp ./scripts/configs/price-feeder.toml $PF_CONFIG
     PRICE_FEEDER_VALIDATOR="$(umeed keys show val1 --home $CHAIN_DIR/$CHAINID_1 --bech val --keyring-backend test -a)"
     # PRICE_FEEDER_VALIDATOR=$(eval "umeed keys show validator${VAL_NUM} --home ${DAEMON_HOME}-${VAL_NUM} --bech val --keyring-backend test --output json | jq .address")
-    PRICE_FEEDER_ADDRESS="$(umeed keys show wallet1 --home $CHAIN_DIR/$CHAINID_1 --keyring-backend test -a)"
+    PRICE_FEEDER_ADDRESS="$(umeed keys show val1 --home $CHAIN_DIR/$CHAINID_1 --keyring-backend test -a)"
     # PRICE_FEEDER_ADDRESS="\"$(eval "umeed keys show account${ACCT_NUM} -a --home $DAEMON_HOME-1 --keyring-backend test")\""
     UMEE_VAL_KEY_DIR=$CHAIN_DIR/$CHAINID_1
     UMEE_VAL_HOST="tcp://localhost:${RPC}"
